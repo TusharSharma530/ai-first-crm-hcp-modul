@@ -7,6 +7,7 @@ const Layout = ({ children }) => {
     { path: '/', label: 'Log Interaction', icon: '📝' },
     { path: '/chat', label: 'AI Chat', icon: '💬' },
     { path: '/interactions', label: 'All Records', icon: '📋' },
+    { path: '/docs', label: 'Docs', icon: '📚' },
   ];
 
   return (

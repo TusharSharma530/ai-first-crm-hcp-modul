@@ -5,6 +5,7 @@ import Layout from './components/Layout';
 import LogInteractionForm from './features/interactions/LogInteractionForm';
 import InteractionsPage from './features/interactions/InteractionsPage';
 import ChatInterface from './features/chat/ChatInterface';
+import DocsPage from './features/docs/DocsPage';
 
 function App() {
   return (
@@ -35,6 +36,7 @@ function App() {
                 <ChatInterface />
               </div>
             } />
+            <Route path="/docs" element={<DocsPage />} />
           </Routes>
         </Layout>
       </Router>
