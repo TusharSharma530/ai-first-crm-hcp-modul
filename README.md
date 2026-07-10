@@ -1,5 +1,7 @@
 # AI-First CRM - HCP Module (Log Interaction Screen)
 
+![Project Screenshot](project-foto.png)
+
 A full-stack AI-powered CRM system for Healthcare Professional (HCP) interactions, featuring a LangGraph AI agent with 5 specialized tools for managing sales activities.
 
 ## Tech Stack
@@ -9,11 +11,15 @@ A full-stack AI-powered CRM system for Healthcare Professional (HCP) interaction
 | Frontend | React + Redux |
 | Backend | Python + FastAPI |
 | AI Agent | LangGraph |
-| LLM | Groq (gemma2-9b-it) |
+| LLM | Groq (llama-3.3-70b-versatile) |
 | Database | MySQL |
 | Font | Google Inter |
 
 ## Features
+
+![All Records Page](all-record.png)
+
+![Documentation Page](docs-page.png)
 
 - **Dual Interface**: Structured form OR conversational AI chat to log interactions
 - **AI-Powered**: Automatic summarization, sentiment analysis, and entity extraction
@@ -63,7 +69,7 @@ A full-stack AI-powered CRM system for Healthcare Professional (HCP) interaction
 
 - Python 3.8+
 - Node.js 16+
-- PostgreSQL database
+- MySQL database
 - Groq API key (https://console.groq.com)
 
 ### Backend Setup
@@ -152,9 +158,9 @@ Once running, visit http://localhost:8000/docs for interactive API documentation
 ## Design Decisions
 
 1. **LangGraph**: Used for stateful, multi-step AI reasoning with tool integration
-2. **Groq + gemma2-9b-it**: Fast inference for real-time interaction processing
+2. **Groq + llama-3.3-70b-versatile**: Fast inference for real-time interaction processing
 3. **Dual Interface**: Form for structured data entry, chat for natural language flexibility
-4. **PostgreSQL**: Robust relational database for interaction history
+4. **MySQL**: Robust relational database for interaction history
 5. **Redux**: Centralized state management for React frontend
 
 ## License
