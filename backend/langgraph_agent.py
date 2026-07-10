@@ -394,8 +394,10 @@ def process_message(message: str, session_id: str = "default") -> dict:
     try:
         result = app.invoke(inputs, {"recursion_limit": 5})
     except Exception as e:
+        import traceback
+        print(f"LANGGRAPH ERROR: {traceback.format_exc()}")
         return {
-            "response": f"I encountered an error processing your request. Please try again.",
+            "response": f"Error: {str(e)[:200]}",
             "session_id": session_id,
             "tool_used": None,
             "extracted_data": None
