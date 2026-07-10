@@ -4,6 +4,9 @@ import { createInteraction, fetchInteractions } from './interactionSlice';
 
 const LogInteractionForm = () => {
   const dispatch = useDispatch();
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [tempDate, setTempDate] = useState('');
+  const [tempTime, setTempTime] = useState('');
   const [formData, setFormData] = useState({
     hcp_name: '',
     hcp_email: '',
@@ -46,6 +49,22 @@ const LogInteractionForm = () => {
       follow_up_required: followUp,
       follow_up_date: followUp === 'yes' ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16) : '',
     });
+  };
+
+  const openDatePicker = () => {
+    const current = formData.interaction_date || new Date().toISOString().slice(0, 16);
+    setTempDate(current.split('T')[0]);
+    setTempTime(current.split('T')[1] || '12:00');
+    setShowDatePicker(true);
+  };
+
+  const handleDateSet = () => {
+    setFormData({ ...formData, interaction_date: `${tempDate}T${tempTime}` });
+    setShowDatePicker(false);
+  };
+
+  const handleDateCancel = () => {
+    setShowDatePicker(false);
   };
 
   const handleSubmit = async (e) => {
@@ -278,13 +297,138 @@ const LogInteractionForm = () => {
           <div>
             <label style={styles.label}>Date *</label>
             <input
-              type="datetime-local"
-              name="interaction_date"
-              value={formData.interaction_date}
-              onChange={handleChange}
+              type="text"
+              value={formData.interaction_date ? formData.interaction_date.replace('T', ' ') : ''}
+              readOnly
+              onClick={openDatePicker}
               required
-              style={{ ...styles.input, cursor: 'pointer' }}
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                border: '1px solid #d1d5db',
+                borderRadius: '8px',
+                fontSize: '0.9rem',
+                fontFamily: 'Inter, sans-serif',
+                boxSizing: 'border-box',
+                cursor: 'pointer',
+                backgroundColor: 'white'
+              }}
+              placeholder="Click to select date & time"
             />
+            {showDatePicker && (
+              <div style={{
+                position: 'fixed',
+                top: 0, left: 0, right: 0, bottom: 0,
+                backgroundColor: 'rgba(0,0,0,0.5)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 1000
+              }}>
+                <div style={{
+                  backgroundColor: 'white',
+                  borderRadius: '12px',
+                  padding: '1.5rem',
+                  boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+                  minWidth: '300px'
+                }}>
+                  <h3 style={{
+                    margin: '0 0 1rem 0',
+                    fontSize: '1rem',
+                    fontWeight: 600,
+                    color: '#1a1a2e',
+                    fontFamily: 'Inter, sans-serif'
+                  }}>📅 Select Date & Time</h3>
+                  
+                  <div style={{ marginBottom: '1rem' }}>
+                    <label style={{
+                      display: 'block',
+                      marginBottom: '6px',
+                      fontSize: '0.85rem',
+                      fontWeight: 500,
+                      color: '#374151',
+                      fontFamily: 'Inter, sans-serif'
+                    }}>Date</label>
+                    <input
+                      type="date"
+                      value={tempDate}
+                      onChange={(e) => setTempDate(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '10px',
+                        border: '1px solid #d1d5db',
+                        borderRadius: '8px',
+                        fontSize: '0.9rem',
+                        fontFamily: 'Inter, sans-serif',
+                        boxSizing: 'border-box'
+                      }}
+                    />
+                  </div>
+                  
+                  <div style={{ marginBottom: '1.5rem' }}>
+                    <label style={{
+                      display: 'block',
+                      marginBottom: '6px',
+                      fontSize: '0.85rem',
+                      fontWeight: 500,
+                      color: '#374151',
+                      fontFamily: 'Inter, sans-serif'
+                    }}>Time</label>
+                    <input
+                      type="time"
+                      value={tempTime}
+                      onChange={(e) => setTempTime(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '10px',
+                        border: '1px solid #d1d5db',
+                        borderRadius: '8px',
+                        fontSize: '0.9rem',
+                        fontFamily: 'Inter, sans-serif',
+                        boxSizing: 'border-box'
+                      }}
+                    />
+                  </div>
+                  
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <button
+                      type="button"
+                      onClick={handleDateCancel}
+                      style={{
+                        flex: 1,
+                        padding: '10px',
+                        backgroundColor: '#f3f4f6',
+                        color: '#374151',
+                        border: '1px solid #d1d5db',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        fontWeight: 500,
+                        fontFamily: 'Inter, sans-serif'
+                      }}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleDateSet}
+                      style={{
+                        flex: 1,
+                        padding: '10px',
+                        background: 'linear-gradient(135deg, #1a73e8, #1557b0)',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        fontWeight: 500,
+                        fontFamily: 'Inter, sans-serif'
+                      }}
+                    >
+                      ✓ Set
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
