@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { sendMessage, addUserMessage, clearChat } from './chatSlice';
+import HCPProfileCard from './HCPProfileCard';
 
 const ChatInterface = () => {
   const dispatch = useDispatch();
@@ -48,6 +49,7 @@ const ChatInterface = () => {
     { label: "Log a call with Dr. Smith", icon: "📞" },
     { label: "Edit interaction", icon: "✏️" },
     { label: "Search for Dr. Patel", icon: "🔍" },
+    { label: "Get profile for Dr. Smith", icon: "👤" },
     { label: "Show analytics", icon: "📊" },
   ];
 
@@ -179,6 +181,9 @@ const ChatInterface = () => {
                 color: msg.isError ? '#991b1b' : '#1f2937'
               }}>
                 <div>{msg.isError && '⚠️ '}{msg.content}</div>
+                {msg.extractedData && msg.extractedData.profile && (
+                  <HCPProfileCard profile={msg.extractedData.profile} />
+                )}
                 {msg.toolUsed && (
                   <div style={{ marginTop: '6px', paddingTop: '6px', borderTop: '1px solid rgba(0,0,0,0.08)' }}>
                     {getToolBadge(msg.toolUsed)}

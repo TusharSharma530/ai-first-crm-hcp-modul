@@ -68,6 +68,7 @@ const chatSlice = createSlice({
           content: action.payload.response,
           toolUsed: action.payload.tool_used,
           extractedData: action.payload.extracted_data,
+          extractedData: action.payload.extracted_data,
         });
       })
       .addCase(sendMessage.rejected, (state, action) => {
