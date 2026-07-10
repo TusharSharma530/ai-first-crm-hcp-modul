@@ -21,6 +21,33 @@ const LogInteractionForm = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const autoFill = () => {
+    const names = ['Dr. Rajesh Sharma', 'Dr. Priya Patel', 'Dr. Amit Kumar', 'Dr. Sneha Gupta', 'Dr. Rahul Verma', 'Dr. Ananya Singh', 'Dr. Vikram Mehta', 'Dr. Neha Reddy'];
+    const specialties = ['Cardiology', 'Neurology', 'Oncology', 'Pediatrics', 'Orthopedics', 'Dermatology', 'Psychiatry', 'Radiology'];
+    const organizations = ['AIIMS Delhi', 'Apollo Hospital', 'Fortis Healthcare', 'Max Hospital', 'Manipal Hospital', 'Narayana Health', 'Sir Ganga Ram Hospital', 'Metro Hospital'];
+    const types = ['call', 'meeting', 'email', 'visit', 'conference'];
+    const sentiments = ['positive', 'neutral', 'negative'];
+    const topics = ['New drug launch', 'Clinical trial results', 'Patient outcomes', 'Prescription patterns', 'Medical conference', 'Treatment guidelines', 'Drug efficacy', 'Side effects discussion'];
+
+    const randomItem = (arr) => arr[Math.floor(Math.random() * arr.length)];
+    const randomEmail = (name) => name.toLowerCase().replace(/[^a-z]/g, '').replace('dr', '') + '@hospital.com';
+
+    const name = randomItem(names);
+    const followUp = Math.random() > 0.5 ? 'yes' : 'no';
+
+    setFormData({
+      hcp_name: name,
+      hcp_email: randomEmail(name),
+      hcp_specialty: randomItem(specialties),
+      hcp_organization: randomItem(organizations),
+      interaction_type: randomItem(types),
+      interaction_date: new Date().toISOString().slice(0, 16),
+      notes: `Discussed ${randomItem(topics)} with ${name}. ${randomItem(sentiments)} response received. Follow-up needed on ${randomItem(topics).toLowerCase()}.`,
+      follow_up_required: followUp,
+      follow_up_date: followUp === 'yes' ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16) : '',
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setStatus('loading');
@@ -303,15 +330,52 @@ const LogInteractionForm = () => {
           )}
         </div>
 
-        <button
-          type="submit"
-          disabled={status === 'loading'}
-          style={styles.button}
-          onMouseOver={(e) => { if (status !== 'loading') e.target.style.boxShadow = '0 4px 16px rgba(26,115,232,0.4)'; }}
-          onMouseOut={(e) => { e.target.style.boxShadow = '0 2px 8px rgba(26,115,232,0.3)'; }}
-        >
-          {status === 'loading' ? '⏳ Logging...' : '💾 Log Interaction'}
-        </button>
+        <div style={{ display: 'flex', gap: '10px', marginTop: '0.5rem' }}>
+          <button
+            type="button"
+            onClick={autoFill}
+            style={{
+              flex: 1,
+              padding: '12px',
+              background: 'linear-gradient(135deg, #10b981, #059669)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              fontSize: '1rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              fontFamily: 'Inter, sans-serif',
+              boxShadow: '0 2px 8px rgba(16,185,129,0.3)',
+              transition: 'all 0.2s'
+            }}
+            onMouseOver={(e) => { e.target.style.boxShadow = '0 4px 16px rgba(16,185,129,0.4)'; }}
+            onMouseOut={(e) => { e.target.style.boxShadow = '0 2px 8px rgba(16,185,129,0.3)'; }}
+          >
+            ⚡ Auto Fill
+          </button>
+          <button
+            type="submit"
+            disabled={status === 'loading'}
+            style={{
+              flex: 2,
+              padding: '12px',
+              background: status === 'loading' ? '#93c5fd' : 'linear-gradient(135deg, #1a73e8, #1557b0)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              fontSize: '1rem',
+              fontWeight: 600,
+              cursor: status === 'loading' ? 'not-allowed' : 'pointer',
+              fontFamily: 'Inter, sans-serif',
+              boxShadow: '0 2px 8px rgba(26,115,232,0.3)',
+              transition: 'all 0.2s'
+            }}
+            onMouseOver={(e) => { if (status !== 'loading') e.target.style.boxShadow = '0 4px 16px rgba(26,115,232,0.4)'; }}
+            onMouseOut={(e) => { e.target.style.boxShadow = '0 2px 8px rgba(26,115,232,0.3)'; }}
+          >
+            {status === 'loading' ? '⏳ Logging...' : '💾 Log Interaction'}
+          </button>
+        </div>
       </form>
     </div>
   );
