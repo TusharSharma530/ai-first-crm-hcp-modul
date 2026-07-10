@@ -46,6 +46,7 @@ const ChatInterface = () => {
 
   const quickActions = [
     { label: "Log a call with Dr. Smith", icon: "📞" },
+    { label: "Edit interaction", icon: "✏️" },
     { label: "Search for Dr. Patel", icon: "🔍" },
     { label: "Show analytics", icon: "📊" },
   ];
