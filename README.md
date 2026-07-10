@@ -1,6 +1,6 @@
 # AI-First CRM - HCP Module (Log Interaction Screen)
 
-![Project Screenshot](project-foto.png)
+![Project Screenshot](images/project-foto.png)
 
 A full-stack AI-powered CRM system for Healthcare Professional (HCP) interactions, featuring a LangGraph AI agent with 5 specialized tools for managing sales activities.
 
@@ -17,9 +17,9 @@ A full-stack AI-powered CRM system for Healthcare Professional (HCP) interaction
 
 ## Features
 
-![All Records Page](all-record.png)
+![All Records Page](images/all-record.png)
 
-![Documentation Page](docs-page.png)
+![Documentation Page](images/docs-page.png)
 
 - **Dual Interface**: Structured form OR conversational AI chat to log interactions
 - **AI-Powered**: Automatic summarization, sentiment analysis, and entity extraction
@@ -68,9 +68,11 @@ assesment/
 │           └── docs/
 │               └── DocsPage.jsx             # Documentation page
 │
-├── project-foto.png            # Homepage screenshot
-├── all-record.png              # All records screenshot
-├── docs-page.png               # Documentation screenshot
+├── images/
+│   ├── project-foto.png        # Homepage screenshot
+│   ├── all-record.png          # All records screenshot
+│   └── docs-page.png           # Documentation screenshot
+│
 └── README.md
 ```
 
