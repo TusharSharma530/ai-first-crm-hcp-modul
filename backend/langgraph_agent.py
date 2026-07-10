@@ -94,11 +94,11 @@ def log_interaction_tool(query: str) -> str:
             hcp_email=extracted.get("hcp_email"),
             hcp_specialty=extracted.get("hcp_specialty"),
             hcp_organization=extracted.get("hcp_organization"),
-            interaction_type=extracted.get("interaction_type", "call"),
+            interaction_type=extracted.get("interaction_type") or "call",
             interaction_date=datetime.now(),
             notes=query,
-            summary=extracted.get("summary"),
-            sentiment=extracted.get("sentiment"),
+            summary=extracted.get("summary") or query[:200],
+            sentiment=extracted.get("sentiment") or "neutral",
             key_topics=extracted.get("key_topics"),
             follow_up_required=follow_up_bool
         )
@@ -131,56 +131,70 @@ def edit_interaction_tool(query: str) -> str:
     db = SessionLocal()
     try:
         import re
-        text = query.strip()
+        text = query.strip().lower()
         
         interaction_id = None
-        id_match = re.search(r'(?:interaction|id|#)\s*(\d+)', text, re.IGNORECASE)
+        id_match = re.search(r'(?:interaction|id|#|no|number)\s*(\d+)', text, re.IGNORECASE)
         if id_match:
             interaction_id = int(id_match.group(1))
         
         hcp_name = None
-        name_match = re.search(r'(?:Dr\.?|doctor)\s+([\w\s]+?)(?:\s*,|\s+and\b|\s+to\b|\s+change\b|\s*$)', text, re.IGNORECASE)
+        name_match = re.search(r'(?:Dr\.?|doctor)\s+([\w]+)', text, re.IGNORECASE)
         if name_match:
             hcp_name = name_match.group(1).strip()
         else:
-            name_match2 = re.search(r'(?:name|hcp)\s+([\w]+)', text, re.IGNORECASE)
+            name_match2 = re.search(r'(?:name|hcp|doc)\s+(\w+)', text, re.IGNORECASE)
             if name_match2:
                 hcp_name = name_match2.group(1).strip()
         
         field_map = {
-            "name": "hcp_name", "hcp_name": "hcp_name", "doctor name": "hcp_name",
-            "email": "hcp_email", "hcp_email": "hcp_email",
-            "specialty": "hcp_specialty", "hcp_specialty": "hcp_specialty",
-            "organization": "hcp_organization", "hcp_organization": "hcp_organization", "hospital": "hcp_organization",
-            "type": "interaction_type", "interaction_type": "interaction_type",
-            "date": "interaction_date", "interaction_date": "interaction_date",
-            "notes": "notes", "summary": "summary", "sentiment": "sentiment",
-            "topics": "key_topics", "key_topics": "key_topics",
-            "follow up": "follow_up_required", "follow_up_required": "follow_up_required",
-            "follow up date": "follow_up_date", "follow_up_date": "follow_up_date"
+            "name": "hcp_name", "hcp_name": "hcp_name", "doctor name": "hcp_name", "doc name": "hcp_name",
+            "email": "hcp_email", "hcp_email": "hcp_email", "mail": "hcp_email",
+            "specialty": "hcp_specialty", "hcp_specialty": "hcp_specialty", "spec": "hcp_specialty",
+            "organization": "hcp_organization", "hcp_organization": "hcp_organization", "hospital": "hcp_organization", "org": "hcp_organization", "clinic": "hcp_organization",
+            "type": "interaction_type", "interaction_type": "interaction_type", "int type": "interaction_type", "category": "interaction_type",
+            "date": "interaction_date", "interaction_date": "interaction_date", "when": "interaction_date",
+            "notes": "notes", "note": "notes", "summary": "summary", "desc": "summary", "description": "summary",
+            "sentiment": "sentiment", "mood": "sentiment",
+            "topics": "key_topics", "key_topics": "key_topics", "topic": "key_topics", "subject": "key_topics",
+            "follow up": "follow_up_required", "follow_up_required": "follow_up_required", "followup": "follow_up_required", "follow": "follow_up_required",
+            "follow up date": "follow_up_date", "follow_up_date": "follow_up_date", "followup date": "follow_up_date"
         }
         
         updates = {}
         
-        name_change = re.search(r'(?:name|hcp)\s+(\w+)\s+to\s+(\w+)', text, re.IGNORECASE)
+        name_change = re.search(r'(?:name|hcp|doc)\s+(\w+)\s+(?:to|se|->|=>)\s+(\w+)', text, re.IGNORECASE)
         if name_change:
             updates["hcp_name"] = name_change.group(2)
         
-        change_pattern = re.findall(r'(?:change|update|set|modify)\s+(.+?)\s+to\s+(.+?)(?:\s+and\s+|\s*$)', text, re.IGNORECASE)
+        change_pattern = re.findall(r'(?:change|update|set|modify|alter|edit|edt|replace|correct|karo|badlo|sar|sudharo)\s+(.+?)\s+(?:to|se|->|=>)\s+(.+?)(?:\s+and\s+|\s*$)', text, re.IGNORECASE)
+        
         if not change_pattern and not updates:
-            change_pattern = re.findall(r'(\w[\w\s]*?)\s+to\s+(.+?)(?:\s+and\s+|\s*$)', text, re.IGNORECASE)
+            hindi_pattern = re.findall(r'(\w+)\s+(?:change|karo|badlo)\s+(?:karo|se|to|->|=>)\s+(.+?)(?:\s+and\s+|\s*$)', text, re.IGNORECASE)
+            change_pattern.extend(hindi_pattern)
+        
+        if not change_pattern and not updates:
+            change_pattern = re.findall(r'(\w+)\s+(?:to|se|->|=>)\s+(.+?)(?:\s+and\s+|\s*$)', text, re.IGNORECASE)
         
         for field_raw, value in change_pattern:
             field_raw = field_raw.strip().lower()
-            value = value.strip().strip('"').strip("'")
+            value = value.strip().strip('"').strip("'").rstrip('.')
             
-            if field_raw in ("name", "aryan", "vikas") and not updates.get("hcp_name"):
+            if not value:
                 continue
             
+            matched = False
             for key, db_field in field_map.items():
                 if key in field_raw:
                     updates[db_field] = value
+                    matched = True
                     break
+            
+            if not matched and field_raw not in ("name", "aryan", "vikas", "dr"):
+                for key, db_field in field_map.items():
+                    if field_raw == key:
+                        updates[db_field] = value
+                        break
         
         if not interaction_id and not hcp_name and not updates:
             return json.dumps({
@@ -385,16 +399,21 @@ tools = [
 def call_model(state: AgentState) -> dict:
     messages = state["messages"]
     
-    system_msg = SystemMessage(content="""You are an AI CRM assistant for healthcare professional interactions in the life sciences industry.
+    system_msg = SystemMessage(content="""You are an AI CRM assistant. You understand ALL types of user inputs including:
+- Misspellings: "log intreaction", "edt interactin", "srearch", "edt", "lod"
+- Mixed case: "LOG INTERACTION", "Edit Interaction", "SEARCH dr smith"
+- Shortcuts: "log call", "edt notes", "srch smith"
+- Natural language: "I want to record a call with Dr. Smith", "can you update Dr. Patel's notes"
+- Hindi-English mix: "Dr. Smith ka notes change karo"
 
-You have these tools:
-1. log_interaction_tool: Log a new HCP interaction
-2. edit_interaction_tool: Edit an existing interaction. Supports natural language like "edit Dr. Smith, change notes to X"
-3. search_interactions_tool: Search past interactions
-4. get_hcp_profile_tool: Get HCP profile
-5. get_analytics_tool: Get analytics
+Available tools:
+1. log_interaction_tool - Record a new interaction with an HCP. Use for: log, record, create, add, new interaction
+2. edit_interaction_tool - Modify an existing interaction. Use for: edit, edt, change, update, modify, alter, replace
+3. search_interactions_tool - Find past interactions. Use for: search, find, look, show, list, get
+4. get_hcp_profile_tool - Get HCP profile and history. Use for: profile, detail, info, about doctor
+5. get_analytics_tool - Get statistics. Use for: analytics, stats, report, numbers
 
-When user wants to EDIT something, always call edit_interaction_tool with their message.
+IMPORTANT: Always match user intent to the correct tool. Fix spelling automatically. If user says "edt" → edit. If "lod" → log. If "srearch" → search. Never refuse - always try to help.
 """)
     
     all_messages = [system_msg] + list(messages)
