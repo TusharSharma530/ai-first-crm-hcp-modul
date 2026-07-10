@@ -171,8 +171,13 @@ const ChatInterface = () => {
 
           {messages.map((msg, index) => (
             <div key={index} style={msg.role === 'user' ? styles.userMsg : styles.aiMsg}>
-              <div style={msg.role === 'user' ? styles.userBubble : styles.aiBubble}>
-                <div>{msg.content}</div>
+              <div style={msg.role === 'user' ? styles.userBubble : {
+                ...styles.aiBubble,
+                backgroundColor: msg.isError ? '#fef2f2' : '#f3f4f6',
+                border: msg.isError ? '1px solid #fca5a5' : 'none',
+                color: msg.isError ? '#991b1b' : '#1f2937'
+              }}>
+                <div>{msg.isError && '⚠️ '}{msg.content}</div>
                 {msg.toolUsed && (
                   <div style={{ marginTop: '6px', paddingTop: '6px', borderTop: '1px solid rgba(0,0,0,0.08)' }}>
                     {getToolBadge(msg.toolUsed)}

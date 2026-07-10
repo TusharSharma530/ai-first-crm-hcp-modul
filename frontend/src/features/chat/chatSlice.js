@@ -5,12 +5,26 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 
 export const sendMessage = createAsyncThunk(
   'chat/sendMessage',
-  async ({ message, sessionId }) => {
-    const response = await axios.post(`${API_URL}/chat/`, {
-      message,
-      session_id: sessionId,
-    });
-    return response.data;
+  async ({ message, sessionId }, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(`${API_URL}/chat/`, {
+        message,
+        session_id: sessionId,
+      }, { timeout: 30000 });
+      return response.data;
+    } catch (error) {
+      let errorMsg = 'Something went wrong. Please try again.';
+      if (error.code === 'ECONNABORTED') {
+        errorMsg = 'Request timed out. Please try again.';
+      } else if (!error.response) {
+        errorMsg = 'Cannot connect to server. Please check if backend is running.';
+      } else if (error.response?.status === 500) {
+        errorMsg = 'Server error. Please try again later.';
+      } else if (error.response?.data?.detail) {
+        errorMsg = error.response.data.detail;
+      }
+      return rejectWithValue(errorMsg);
+    }
   }
 );
 
@@ -31,12 +45,17 @@ const chatSlice = createSlice({
       state.messages = [];
       state.sessionId = null;
       state.toolUsed = null;
+      state.error = null;
+    },
+    clearError: (state) => {
+      state.error = null;
     },
   },
   extraReducers: (builder) => {
     builder
       .addCase(sendMessage.pending, (state) => {
         state.status = 'loading';
+        state.error = null;
       })
       .addCase(sendMessage.fulfilled, (state, action) => {
         state.status = 'succeeded';
@@ -51,10 +70,15 @@ const chatSlice = createSlice({
       })
       .addCase(sendMessage.rejected, (state, action) => {
         state.status = 'failed';
-        state.error = action.error.message;
+        state.error = action.payload || 'Something went wrong';
+        state.messages.push({
+          role: 'assistant',
+          content: action.payload || 'Sorry, something went wrong. Please try again.',
+          isError: true,
+        });
       });
   },
 });
 
-export const { addUserMessage, clearChat } = chatSlice.actions;
+export const { addUserMessage, clearChat, clearError } = chatSlice.actions;
 export default chatSlice.reducer;

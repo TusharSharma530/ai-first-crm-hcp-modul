@@ -5,10 +5,14 @@ from langgraph.graph import StateGraph, END
 from typing import TypedDict, Annotated, Sequence, Optional, Dict, Any
 from langgraph.graph.message import add_messages
 import json
+import logging
 from datetime import datetime
 from database import SessionLocal
 from models import Interaction, ChatMessage
 from config import GROQ_API_KEY, LLM_MODEL
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 class AgentState(TypedDict):
@@ -45,6 +49,9 @@ def clean_json_response(response_content: str) -> dict:
 @tool
 def log_interaction_tool(query: str) -> str:
     """Log a new HCP interaction. Use this when the user wants to record a call, meeting, email, visit, or conference with a healthcare professional. Extract doctor name, hospital, specialty, topics, and sentiment from the message."""
+    if not query or not query.strip():
+        return json.dumps({"status": "error", "message": "Please provide interaction details"})
+    
     db = SessionLocal()
     try:
         summary_prompt = f"""Extract the following from this interaction note and return ONLY valid JSON:
@@ -65,7 +72,8 @@ def log_interaction_tool(query: str) -> str:
         
         try:
             extracted = clean_json_response(response.content)
-        except json.JSONDecodeError:
+        except json.JSONDecodeError as e:
+            logger.warning(f"JSON parse failed, using fallback: {e}")
             extracted = {
                 "hcp_name": "Unknown",
                 "interaction_type": "call",
@@ -93,6 +101,7 @@ def log_interaction_tool(query: str) -> str:
         db.commit()
         db.refresh(interaction)
         
+        logger.info(f"Interaction logged: ID={interaction.id}, Name={interaction.hcp_name}")
         return json.dumps({
             "status": "success",
             "interaction_id": interaction.id,
@@ -100,7 +109,8 @@ def log_interaction_tool(query: str) -> str:
             "extracted_data": extracted
         })
     except Exception as e:
-        return json.dumps({"status": "error", "message": str(e)})
+        logger.error(f"Log interaction error: {str(e)}")
+        return json.dumps({"status": "error", "message": f"Failed to log interaction: {str(e)[:100]}"})
     finally:
         db.close()
 
@@ -108,6 +118,9 @@ def log_interaction_tool(query: str) -> str:
 @tool
 def edit_interaction_tool(query: str) -> str:
     """Edit an existing interaction record. Use this when the user wants to modify, update, or change details of a previously logged interaction. Provide the interaction ID and the fields to update."""
+    if not query or not query.strip():
+        return json.dumps({"status": "error", "message": "Please specify what to edit"})
+    
     db = SessionLocal()
     try:
         extract_prompt = f"""Extract from this message:
@@ -126,13 +139,22 @@ def edit_interaction_tool(query: str) -> str:
         
         try:
             edit_data = clean_json_response(response.content)
-        except json.JSONDecodeError:
-            return json.dumps({"status": "error", "message": "Could not parse edit request"})
+        except json.JSONDecodeError as e:
+            logger.error(f"Edit JSON parse failed: {e}")
+            return json.dumps({"status": "error", "message": "Could not understand the edit request. Please try: 'Edit interaction [ID], change [field] to [value]'"})
         
         interaction_id = edit_data.get("interaction_id")
+        if not interaction_id:
+            return json.dumps({"status": "error", "message": "Please provide the interaction ID to edit"})
+        
         updates = edit_data.get("updates", {})
+        if not updates:
+            return json.dumps({"status": "error", "message": "Please specify which fields to update"})
         
         safe_updates = {k: v for k, v in updates.items() if k in ALLOWED_EDIT_FIELDS}
+        
+        if not safe_updates:
+            return json.dumps({"status": "error", "message": f"No valid fields to update. Allowed: {', '.join(ALLOWED_EDIT_FIELDS)}"})
         
         interaction = db.query(Interaction).filter(Interaction.id == interaction_id).first()
         
@@ -141,14 +163,16 @@ def edit_interaction_tool(query: str) -> str:
                 setattr(interaction, key, value)
             db.commit()
             db.refresh(interaction)
+            logger.info(f"Interaction {interaction_id} updated: {list(safe_updates.keys())}")
             return json.dumps({
                 "status": "success",
                 "message": f"Interaction {interaction_id} updated. Fields changed: {list(safe_updates.keys())}"
             })
         else:
-            return json.dumps({"status": "error", "message": f"Interaction {interaction_id} not found"})
+            return json.dumps({"status": "error", "message": f"Interaction with ID {interaction_id} not found. Please check the ID."})
     except Exception as e:
-        return json.dumps({"status": "error", "message": str(e)})
+        logger.error(f"Edit interaction error: {str(e)}")
+        return json.dumps({"status": "error", "message": f"Failed to edit interaction: {str(e)[:100]}"})
     finally:
         db.close()
 
@@ -156,6 +180,9 @@ def edit_interaction_tool(query: str) -> str:
 @tool
 def search_interactions_tool(query: str) -> str:
     """Search for existing HCP interactions by doctor name or keywords. Use this when the user wants to find, look up, or search for past interactions."""
+    if not query or not query.strip():
+        return json.dumps({"status": "error", "message": "Please provide a search term"})
+    
     db = SessionLocal()
     try:
         import re
@@ -171,6 +198,14 @@ def search_interactions_tool(query: str) -> str:
         
         interactions = q.order_by(Interaction.interaction_date.desc()).limit(10).all()
         
+        if not interactions:
+            return json.dumps({
+                "status": "success",
+                "count": 0,
+                "results": [],
+                "message": f"No interactions found for '{query}'"
+            })
+        
         results = [{
             "id": i.id,
             "hcp_name": i.hcp_name,
@@ -179,13 +214,15 @@ def search_interactions_tool(query: str) -> str:
             "summary": i.summary
         } for i in interactions]
         
+        logger.info(f"Search '{query}': found {len(results)} results")
         return json.dumps({
             "status": "success",
             "count": len(results),
             "results": results
         })
     except Exception as e:
-        return json.dumps({"status": "error", "message": str(e)})
+        logger.error(f"Search error: {str(e)}")
+        return json.dumps({"status": "error", "message": f"Search failed: {str(e)[:100]}"})
     finally:
         db.close()
 
@@ -392,6 +429,8 @@ def process_message(message: str, session_id: str = "default") -> dict:
         )
         db.add(db_message)
         db.commit()
+    except Exception as e:
+        logger.error(f"Failed to save user message: {e}")
     finally:
         db.close()
     
@@ -405,10 +444,14 @@ def process_message(message: str, session_id: str = "default") -> dict:
     try:
         result = app.invoke(inputs, {"recursion_limit": 5})
     except Exception as e:
-        import traceback
-        print(f"LANGGRAPH ERROR: {traceback.format_exc()}")
+        logger.error(f"LangGraph error: {str(e)}")
+        error_msg = "Sorry, I encountered an error processing your request. Please try again."
+        if "recursion" in str(e).lower():
+            error_msg = "The request was too complex. Please try a simpler command."
+        elif "api" in str(e).lower() or "groq" in str(e).lower():
+            error_msg = "AI service is temporarily unavailable. Please try again in a moment."
         return {
-            "response": f"Error: {str(e)[:200]}",
+            "response": error_msg,
             "session_id": session_id,
             "tool_used": None,
             "extracted_data": None
@@ -429,13 +472,20 @@ def process_message(message: str, session_id: str = "default") -> dict:
             tool_name = last_tool.get("tool", "")
             tool_result = last_tool.get("result", {})
             
-            summary_prompt = f"""Based on this tool execution, write a brief response to the user.
+            if tool_result.get("status") == "error":
+                ai_response = f"Sorry, {tool_result.get('message', 'something went wrong')}"
+            else:
+                summary_prompt = f"""Based on this tool execution, write a brief response to the user.
 Tool: {tool_name}
 Result: {json.dumps(tool_result)[:500]}
 Write 1-2 sentences confirming what was done."""
-            
-            summary_response = llm.invoke([HumanMessage(content=summary_prompt)])
-            ai_response = summary_response.content
+                
+                try:
+                    summary_response = llm.invoke([HumanMessage(content=summary_prompt)])
+                    ai_response = summary_response.content
+                except Exception as e:
+                    logger.error(f"Summary generation failed: {e}")
+                    ai_response = f"Done! {tool_result.get('message', 'Operation completed successfully.')}"
         else:
             ai_response = "I processed your request."
     
@@ -453,6 +503,8 @@ Write 1-2 sentences confirming what was done."""
         )
         db.add(db_message)
         db.commit()
+    except Exception as e:
+        logger.error(f"Failed to save assistant message: {e}")
     finally:
         db.close()
     

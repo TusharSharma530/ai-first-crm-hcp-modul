@@ -5,25 +5,49 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 
 export const fetchInteractions = createAsyncThunk(
   'interactions/fetchAll',
-  async () => {
-    const response = await axios.get(`${API_URL}/interactions/`);
-    return response.data;
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axios.get(`${API_URL}/interactions/`, { timeout: 10000 });
+      return response.data;
+    } catch (error) {
+      let errorMsg = 'Failed to load interactions';
+      if (!error.response) {
+        errorMsg = 'Cannot connect to server';
+      }
+      return rejectWithValue(errorMsg);
+    }
   }
 );
 
 export const createInteraction = createAsyncThunk(
   'interactions/create',
-  async (interactionData) => {
-    const response = await axios.post(`${API_URL}/interactions/`, interactionData);
-    return response.data;
+  async (interactionData, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(`${API_URL}/interactions/`, interactionData, { timeout: 10000 });
+      return response.data;
+    } catch (error) {
+      let errorMsg = 'Failed to create interaction';
+      if (error.response?.data?.detail) {
+        errorMsg = error.response.data.detail;
+      }
+      return rejectWithValue(errorMsg);
+    }
   }
 );
 
 export const deleteInteraction = createAsyncThunk(
   'interactions/delete',
-  async (id) => {
-    await axios.delete(`${API_URL}/interactions/${id}`);
-    return id;
+  async (id, { rejectWithValue }) => {
+    try {
+      await axios.delete(`${API_URL}/interactions/${id}`, { timeout: 10000 });
+      return id;
+    } catch (error) {
+      let errorMsg = 'Failed to delete interaction';
+      if (!error.response) {
+        errorMsg = 'Cannot connect to server';
+      }
+      return rejectWithValue(errorMsg);
+    }
   }
 );
 
@@ -34,11 +58,16 @@ const interactionSlice = createSlice({
     status: 'idle',
     error: null,
   },
-  reducers: {},
+  reducers: {
+    clearError: (state) => {
+      state.error = null;
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchInteractions.pending, (state) => {
         state.status = 'loading';
+        state.error = null;
       })
       .addCase(fetchInteractions.fulfilled, (state, action) => {
         state.status = 'succeeded';
@@ -46,15 +75,22 @@ const interactionSlice = createSlice({
       })
       .addCase(fetchInteractions.rejected, (state, action) => {
         state.status = 'failed';
-        state.error = action.error.message;
+        state.error = action.payload || 'Failed to load interactions';
       })
       .addCase(createInteraction.fulfilled, (state, action) => {
         state.items.unshift(action.payload);
       })
+      .addCase(createInteraction.rejected, (state, action) => {
+        state.error = action.payload || 'Failed to create interaction';
+      })
       .addCase(deleteInteraction.fulfilled, (state, action) => {
         state.items = state.items.filter(i => i.id !== action.payload);
+      })
+      .addCase(deleteInteraction.rejected, (state, action) => {
+        state.error = action.payload || 'Failed to delete interaction';
       });
   },
 });
 
+export const { clearError } = interactionSlice.actions;
 export default interactionSlice.reducer;
