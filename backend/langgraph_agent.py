@@ -147,28 +147,16 @@ def search_interactions_tool(query: str) -> str:
     """Search for existing HCP interactions by doctor name or keywords. Use this when the user wants to find, look up, or search for past interactions."""
     db = SessionLocal()
     try:
-        search_prompt = f"""Extract search criteria from this query:
-        - hcp_name (optional - doctor name to search for)
-        - keywords (optional - keywords to search in notes)
-        
-        Query: {query}
-        
-        Return ONLY valid JSON with keys: hcp_name, keywords"""
-        
-        response = llm.invoke([HumanMessage(content=search_prompt)])
-        
-        try:
-            criteria = json.loads(response.content)
-        except json.JSONDecodeError:
-            criteria = {"keywords": query}
-        
+        import re
         q = db.query(Interaction)
-        
-        if criteria.get("hcp_name"):
-            q = q.filter(Interaction.hcp_name.ilike(f"%{criteria['hcp_name']}%"))
-        
-        if criteria.get("keywords"):
-            q = q.filter(Interaction.notes.ilike(f"%{criteria['keywords']}%"))
+
+        name_match = re.search(r'(?:Dr\.?|Doctor)\s+([\w\s]+?)(?:\s+keywords?:|\s+and\b|\s*$)', query, re.IGNORECASE)
+        if name_match:
+            q = q.filter(Interaction.hcp_name.ilike(f"%{name_match.group(1).strip()}%"))
+        else:
+            words = [w for w in query.split() if w.lower() not in ("search", "interactions", "with", "for", "dr", "dr.", "doctor", "find", "show", "me", "and", "keywords", "keyword", "interaction")]
+            if words:
+                q = q.filter(Interaction.hcp_name.ilike(f"%{' '.join(words)}%"))
         
         interactions = q.order_by(Interaction.interaction_date.desc()).limit(10).all()
         
