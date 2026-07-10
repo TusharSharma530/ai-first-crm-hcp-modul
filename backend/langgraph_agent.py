@@ -31,6 +31,17 @@ ALLOWED_EDIT_FIELDS = {
 }
 
 
+def clean_json_response(response_content: str) -> dict:
+    """Clean LLM response and extract valid JSON."""
+    import re
+    content = response_content.strip()
+    content = re.sub(r'^```json\s*', '', content)
+    content = re.sub(r'^```\s*', '', content)
+    content = re.sub(r'\s*```$', '', content)
+    content = content.strip()
+    return json.loads(content)
+
+
 @tool
 def log_interaction_tool(query: str) -> str:
     """Log a new HCP interaction. Use this when the user wants to record a call, meeting, email, visit, or conference with a healthcare professional. Extract doctor name, hospital, specialty, topics, and sentiment from the message."""
@@ -53,7 +64,7 @@ def log_interaction_tool(query: str) -> str:
         response = llm.invoke([HumanMessage(content=summary_prompt)])
         
         try:
-            extracted = json.loads(response.content)
+            extracted = clean_json_response(response.content)
         except json.JSONDecodeError:
             extracted = {
                 "hcp_name": "Unknown",
@@ -114,7 +125,7 @@ def edit_interaction_tool(query: str) -> str:
         response = llm.invoke([HumanMessage(content=extract_prompt)])
         
         try:
-            edit_data = json.loads(response.content)
+            edit_data = clean_json_response(response.content)
         except json.JSONDecodeError:
             return json.dumps({"status": "error", "message": "Could not parse edit request"})
         
@@ -191,7 +202,7 @@ def get_hcp_profile_tool(query: str) -> str:
         response = llm.invoke([HumanMessage(content=profile_prompt)])
         
         try:
-            data = json.loads(response.content)
+            data = clean_json_response(response.content)
         except json.JSONDecodeError:
             data = {"hcp_name": query}
         
