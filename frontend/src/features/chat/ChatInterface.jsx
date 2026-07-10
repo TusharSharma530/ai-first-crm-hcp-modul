@@ -147,18 +147,7 @@ const ChatInterface = () => {
               <p style={{ fontSize: '0.85rem', marginBottom: '1rem' }}>
                 I can log interactions, search, get profiles & analytics
               </p>
-              <div style={{ 
-                padding: '10px 14px', 
-                backgroundColor: '#fef3c7', 
-                borderRadius: '8px', 
-                fontSize: '0.75rem',
-                color: '#92400e',
-                marginBottom: '1rem',
-                textAlign: 'left'
-              }}>
-                <strong>Edit Tip:</strong> Type "Edit interaction [ID], change [field] to [value]"<br/>
-                Example: "Edit interaction 1, change notes to Updated discussion"
-              </div>
+
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', justifyContent: 'center' }}>
                 {quickActions.map((action, index) => (
                   <button key={index} onClick={() => {
