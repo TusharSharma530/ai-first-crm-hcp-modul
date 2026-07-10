@@ -68,7 +68,13 @@ def log_interaction_tool(query: str) -> str:
         
         Note: {query}"""
         
-        response = llm.invoke([HumanMessage(content=summary_prompt)])
+        try:
+            response = llm.invoke([HumanMessage(content=summary_prompt)])
+        except Exception as e:
+            error_str = str(e).lower()
+            if "rate_limit" in error_str or "429" in error_str:
+                return json.dumps({"status": "error", "message": "AI service busy. Please wait a moment and try again."})
+            raise e
         
         try:
             extracted = clean_json_response(response.content)
@@ -135,7 +141,13 @@ def edit_interaction_tool(query: str) -> str:
         
         Return ONLY valid JSON with keys: interaction_id, updates"""
         
-        response = llm.invoke([HumanMessage(content=extract_prompt)])
+        try:
+            response = llm.invoke([HumanMessage(content=extract_prompt)])
+        except Exception as e:
+            error_str = str(e).lower()
+            if "rate_limit" in error_str or "429" in error_str:
+                return json.dumps({"status": "error", "message": "AI service busy. Please wait a moment and try again."})
+            raise e
         
         try:
             edit_data = clean_json_response(response.content)
@@ -236,7 +248,13 @@ def get_hcp_profile_tool(query: str) -> str:
         Query: {query}
         Return ONLY valid JSON with key: hcp_name"""
         
-        response = llm.invoke([HumanMessage(content=profile_prompt)])
+        try:
+            response = llm.invoke([HumanMessage(content=profile_prompt)])
+        except Exception as e:
+            error_str = str(e).lower()
+            if "rate_limit" in error_str or "429" in error_str:
+                return json.dumps({"status": "error", "message": "AI service busy. Please wait a moment and try again."})
+            raise e
         
         try:
             data = clean_json_response(response.content)
@@ -340,7 +358,15 @@ If the user just says hello or asks a general question, respond helpfully withou
 """)
     
     all_messages = [system_msg] + list(messages)
-    response = llm.bind_tools(tools).invoke(all_messages)
+    try:
+        response = llm.bind_tools(tools).invoke(all_messages)
+    except Exception as e:
+        error_str = str(e).lower()
+        if "rate_limit" in error_str or "429" in error_str:
+            from langchain_core.messages import AIMessage
+            response = AIMessage(content="⏳ AI service is busy right now. Please wait a minute and try again.")
+        else:
+            raise e
     return {"messages": [response]}
 
 
@@ -445,11 +471,19 @@ def process_message(message: str, session_id: str = "default") -> dict:
         result = app.invoke(inputs, {"recursion_limit": 5})
     except Exception as e:
         logger.error(f"LangGraph error: {str(e)}")
-        error_msg = "Sorry, I encountered an error processing your request. Please try again."
-        if "recursion" in str(e).lower():
+        error_str = str(e).lower()
+        
+        if "rate_limit" in error_str or "rate limit" in error_str or "429" in error_str:
+            error_msg = "⏳ API rate limit reached. Please wait a minute and try again."
+        elif "recursion" in error_str:
             error_msg = "The request was too complex. Please try a simpler command."
-        elif "api" in str(e).lower() or "groq" in str(e).lower():
+        elif "api" in error_str or "groq" in error_str or "connection" in error_str:
             error_msg = "AI service is temporarily unavailable. Please try again in a moment."
+        elif "timeout" in error_str:
+            error_msg = "Request timed out. Please try again."
+        else:
+            error_msg = "Sorry, I encountered an error. Please try again."
+        
         return {
             "response": error_msg,
             "session_id": session_id,
@@ -484,8 +518,12 @@ Write 1-2 sentences confirming what was done."""
                     summary_response = llm.invoke([HumanMessage(content=summary_prompt)])
                     ai_response = summary_response.content
                 except Exception as e:
-                    logger.error(f"Summary generation failed: {e}")
-                    ai_response = f"Done! {tool_result.get('message', 'Operation completed successfully.')}"
+                    error_str = str(e).lower()
+                    if "rate_limit" in error_str or "429" in error_str:
+                        ai_response = f"✅ Done! {tool_result.get('message', 'Operation completed successfully.')}"
+                    else:
+                        logger.error(f"Summary generation failed: {e}")
+                        ai_response = f"Done! {tool_result.get('message', 'Operation completed successfully.')}"
         else:
             ai_response = "I processed your request."
     

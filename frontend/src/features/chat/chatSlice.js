@@ -18,6 +18,8 @@ export const sendMessage = createAsyncThunk(
         errorMsg = 'Request timed out. Please try again.';
       } else if (!error.response) {
         errorMsg = 'Cannot connect to server. Please check if backend is running.';
+      } else if (error.response?.status === 429) {
+        errorMsg = '⏳ Too many requests. Please wait a minute and try again.';
       } else if (error.response?.status === 500) {
         errorMsg = 'Server error. Please try again later.';
       } else if (error.response?.data?.detail) {
