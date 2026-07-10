@@ -289,15 +289,48 @@ const LogInteractionForm = () => {
         </div>
 
         <div style={styles.field}>
-          <label style={styles.label}>Notes *</label>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+            <label style={styles.label}>Notes *</label>
+            <button
+              type="button"
+              onClick={() => {
+                const name = formData.hcp_name || 'the doctor';
+                const org = formData.hcp_organization || 'their hospital';
+                const type = formData.interaction_type;
+                const typeNames = { call: 'call', meeting: 'meeting', email: 'email exchange', visit: 'visit', conference: 'conference' };
+                const typeName = typeNames[type] || 'interaction';
+                const generated = `Had a ${typeName} with ${name} from ${org}. Discussed current treatment protocols and patient outcomes. ${formData.follow_up_required === 'yes' ? 'Follow-up scheduled to review progress.' : 'Will continue to monitor and follow up as needed.'}`;
+                setFormData({ ...formData, notes: generated });
+              }}
+              title="Generate notes with AI"
+              style={{
+                width: '28px',
+                height: '28px',
+                background: 'transparent',
+                color: '#0ea5e9',
+                border: '1px solid #0ea5e9',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: 0
+              }}
+              onMouseOver={(e) => { e.target.style.backgroundColor = '#f0f9ff'; }}
+              onMouseOut={(e) => { e.target.style.backgroundColor = 'transparent'; }}
+            >
+              ✨
+            </button>
+          </div>
           <textarea
             name="notes"
             value={formData.notes}
             onChange={handleChange}
             required
             rows={3}
-            style={{ ...styles.input, resize: 'vertical', lineHeight: '1.5' }}
-            placeholder="Describe the interaction details, topics discussed, outcomes..."
+            style={{ ...styles.input, resize: 'vertical', lineHeight: '1.5', width: '100%', boxSizing: 'border-box' }}
+            placeholder="Describe the interaction details, topics discussed, outcomes... (or click ✨)"
             onFocus={(e) => { e.target.style.borderColor = '#1a73e8'; e.target.style.boxShadow = '0 0 0 3px rgba(26,115,232,0.1)'; }}
             onBlur={(e) => { e.target.style.borderColor = '#d1d5db'; e.target.style.boxShadow = 'none'; }}
           />
