@@ -123,68 +123,109 @@ def log_interaction_tool(query: str) -> str:
 
 @tool
 def edit_interaction_tool(query: str) -> str:
-    """Edit an existing interaction record. Use this when the user wants to modify, update, or change details of a previously logged interaction. Provide the interaction ID and the fields to update."""
+    """Edit an existing interaction record. Use this when the user wants to modify, update, or change details of a previously logged interaction. Can work with just doctor name and field changes - no ID required."""
     if not query or not query.strip():
         return json.dumps({"status": "error", "message": "Please specify what to edit"})
     
+    logger.info(f"EDIT TOOL RAW QUERY: {query}")
     db = SessionLocal()
     try:
-        extract_prompt = f"""Extract from this message:
-        - interaction_id (the ID number to edit)
-        - updates (dict of field:value pairs to change)
+        import re
+        text = query.strip()
         
-        Allowed fields: hcp_name, hcp_email, hcp_specialty, hcp_organization, 
-        interaction_type, interaction_date, notes, summary, sentiment, 
-        key_topics, follow_up_required, follow_up_date
+        interaction_id = None
+        id_match = re.search(r'(?:interaction|id|#)\s*(\d+)', text, re.IGNORECASE)
+        if id_match:
+            interaction_id = int(id_match.group(1))
         
-        Message: {query}
+        hcp_name = None
+        name_match = re.search(r'(?:Dr\.?|doctor)\s+([\w\s]+?)(?:\s*,|\s+and\b|\s+to\b|\s+change\b|\s*$)', text, re.IGNORECASE)
+        if name_match:
+            hcp_name = name_match.group(1).strip()
+        else:
+            name_match2 = re.search(r'(?:name|hcp)\s+([\w]+)', text, re.IGNORECASE)
+            if name_match2:
+                hcp_name = name_match2.group(1).strip()
         
-        Return ONLY valid JSON with keys: interaction_id, updates"""
+        field_map = {
+            "name": "hcp_name", "hcp_name": "hcp_name", "doctor name": "hcp_name",
+            "email": "hcp_email", "hcp_email": "hcp_email",
+            "specialty": "hcp_specialty", "hcp_specialty": "hcp_specialty",
+            "organization": "hcp_organization", "hcp_organization": "hcp_organization", "hospital": "hcp_organization",
+            "type": "interaction_type", "interaction_type": "interaction_type",
+            "date": "interaction_date", "interaction_date": "interaction_date",
+            "notes": "notes", "summary": "summary", "sentiment": "sentiment",
+            "topics": "key_topics", "key_topics": "key_topics",
+            "follow up": "follow_up_required", "follow_up_required": "follow_up_required",
+            "follow up date": "follow_up_date", "follow_up_date": "follow_up_date"
+        }
         
-        try:
-            response = llm.invoke([HumanMessage(content=extract_prompt)])
-        except Exception as e:
-            error_str = str(e).lower()
-            if "rate_limit" in error_str or "429" in error_str:
-                return json.dumps({"status": "error", "message": "AI service busy. Please wait a moment and try again."})
-            raise e
+        updates = {}
         
-        try:
-            edit_data = clean_json_response(response.content)
-        except json.JSONDecodeError as e:
-            logger.error(f"Edit JSON parse failed: {e}")
-            return json.dumps({"status": "error", "message": "Could not understand the edit request. Please try: 'Edit interaction [ID], change [field] to [value]'"})
+        name_change = re.search(r'(?:name|hcp)\s+(\w+)\s+to\s+(\w+)', text, re.IGNORECASE)
+        if name_change:
+            updates["hcp_name"] = name_change.group(2)
         
-        interaction_id = edit_data.get("interaction_id")
-        if not interaction_id:
-            return json.dumps({"status": "error", "message": "Please provide the interaction ID to edit"})
+        change_pattern = re.findall(r'(?:change|update|set|modify)\s+(.+?)\s+to\s+(.+?)(?:\s+and\s+|\s*$)', text, re.IGNORECASE)
+        if not change_pattern and not updates:
+            change_pattern = re.findall(r'(\w[\w\s]*?)\s+to\s+(.+?)(?:\s+and\s+|\s*$)', text, re.IGNORECASE)
         
-        updates = edit_data.get("updates", {})
-        if not updates:
-            return json.dumps({"status": "error", "message": "Please specify which fields to update"})
+        for field_raw, value in change_pattern:
+            field_raw = field_raw.strip().lower()
+            value = value.strip().strip('"').strip("'")
+            
+            if field_raw in ("name", "aryan", "vikas") and not updates.get("hcp_name"):
+                continue
+            
+            for key, db_field in field_map.items():
+                if key in field_raw:
+                    updates[db_field] = value
+                    break
+        
+        if not interaction_id and not hcp_name and not updates:
+            return json.dumps({
+                "status": "error", 
+                "message": "Could not understand the edit. Try:\n• 'edit Dr. Smith, change notes to X'\n• 'edit interaction 5, change sentiment to positive'"
+            })
+        
+        logger.info(f"EDIT EXTRACTED - hcp_name: {hcp_name}, interaction_id: {interaction_id}, updates: {updates}")
         
         safe_updates = {k: v for k, v in updates.items() if k in ALLOWED_EDIT_FIELDS}
+        logger.info(f"EDIT SAFE_UPDATES: {safe_updates}")
         
         if not safe_updates:
-            return json.dumps({"status": "error", "message": f"No valid fields to update. Allowed: {', '.join(ALLOWED_EDIT_FIELDS)}"})
+            return json.dumps({"status": "error", "message": f"Could not find a valid field to update. You can change: {', '.join(field_map.keys())}"})
         
-        interaction = db.query(Interaction).filter(Interaction.id == interaction_id).first()
+        interaction = None
+        if interaction_id:
+            interaction = db.query(Interaction).filter(Interaction.id == interaction_id).first()
+        elif hcp_name:
+            interaction = db.query(Interaction).filter(Interaction.hcp_name.ilike(f"%{hcp_name}%")).order_by(Interaction.interaction_date.desc()).first()
         
         if interaction:
+            old_values = {}
             for key, value in safe_updates.items():
+                old_val = getattr(interaction, key, None)
+                old_values[key] = str(old_val) if old_val else "N/A"
                 setattr(interaction, key, value)
             db.commit()
             db.refresh(interaction)
-            logger.info(f"Interaction {interaction_id} updated: {list(safe_updates.keys())}")
+            
+            changes = []
+            for k, v in safe_updates.items():
+                changes.append(f"{k}: {old_values.get(k, '?')} → {v}")
             return json.dumps({
                 "status": "success",
-                "message": f"Interaction {interaction_id} updated. Fields changed: {list(safe_updates.keys())}"
+                "message": f"Interaction #{interaction.id} updated successfully.",
+                "interaction_id": interaction.id,
+                "changes": changes
             })
         else:
-            return json.dumps({"status": "error", "message": f"Interaction with ID {interaction_id} not found. Please check the ID."})
+            search_term = hcp_name or f"ID {interaction_id}"
+            return json.dumps({"status": "error", "message": f"No interaction found for '{search_term}'. Please log an interaction first or search to find the correct name."})
     except Exception as e:
         logger.error(f"Edit interaction error: {str(e)}")
-        return json.dumps({"status": "error", "message": f"Failed to edit interaction: {str(e)[:100]}"})
+        return json.dumps({"status": "error", "message": f"Failed to edit: {str(e)[:100]}"})
     finally:
         db.close()
 
@@ -346,15 +387,14 @@ def call_model(state: AgentState) -> dict:
     
     system_msg = SystemMessage(content="""You are an AI CRM assistant for healthcare professional interactions in the life sciences industry.
 
-You have access to these tools:
-1. log_interaction_tool: Log a new HCP interaction (call, meeting, email, visit, conference)
-2. edit_interaction_tool: Modify an existing interaction record
-3. search_interactions_tool: Search for past interactions by doctor name or keywords
-4. get_hcp_profile_tool: Get comprehensive HCP profile with interaction history
-5. get_analytics_tool: Get analytics and insights on all interactions
+You have these tools:
+1. log_interaction_tool: Log a new HCP interaction
+2. edit_interaction_tool: Edit an existing interaction. Supports natural language like "edit Dr. Smith, change notes to X"
+3. search_interactions_tool: Search past interactions
+4. get_hcp_profile_tool: Get HCP profile
+5. get_analytics_tool: Get analytics
 
-Based on the user's request, use the appropriate tool. Always use a tool when the user asks to log, edit, search, get profile, or get analytics.
-If the user just says hello or asks a general question, respond helpfully without using a tool.
+When user wants to EDIT something, always call edit_interaction_tool with their message.
 """)
     
     all_messages = [system_msg] + list(messages)
@@ -468,21 +508,21 @@ def process_message(message: str, session_id: str = "default") -> dict:
     }
     
     try:
-        result = app.invoke(inputs, {"recursion_limit": 5})
+        result = app.invoke(inputs, {"recursion_limit": 15})
     except Exception as e:
-        logger.error(f"LangGraph error: {str(e)}")
+        logger.error(f"LangGraph error: {str(e)}", exc_info=True)
         error_str = str(e).lower()
         
         if "rate_limit" in error_str or "rate limit" in error_str or "429" in error_str:
             error_msg = "⏳ API rate limit reached. Please wait a minute and try again."
         elif "recursion" in error_str:
-            error_msg = "The request was too complex. Please try a simpler command."
+            error_msg = "Recursion limit hit. Please try a simpler command."
         elif "api" in error_str or "groq" in error_str or "connection" in error_str:
             error_msg = "AI service is temporarily unavailable. Please try again in a moment."
         elif "timeout" in error_str:
             error_msg = "Request timed out. Please try again."
         else:
-            error_msg = "Sorry, I encountered an error. Please try again."
+            error_msg = f"Error: {str(e)[:200]}"
         
         return {
             "response": error_msg,
@@ -509,21 +549,27 @@ def process_message(message: str, session_id: str = "default") -> dict:
             if tool_result.get("status") == "error":
                 ai_response = f"Sorry, {tool_result.get('message', 'something went wrong')}"
             else:
-                summary_prompt = f"""Based on this tool execution, write a brief response to the user.
+                if tool_name == "edit_interaction_tool" and tool_result.get("changes"):
+                    changes_text = "\n".join(f"• {c}" for c in tool_result["changes"])
+                    ai_response = f"✅ Interaction #{tool_result.get('interaction_id', '?')} updated:\n{changes_text}"
+                elif tool_name == "edit_interaction_tool":
+                    ai_response = f"✅ {tool_result.get('message', 'Interaction updated successfully.')}"
+                else:
+                    summary_prompt = f"""Based on this tool execution, write a brief response to the user.
 Tool: {tool_name}
 Result: {json.dumps(tool_result)[:500]}
 Write 1-2 sentences confirming what was done."""
-                
-                try:
-                    summary_response = llm.invoke([HumanMessage(content=summary_prompt)])
-                    ai_response = summary_response.content
-                except Exception as e:
-                    error_str = str(e).lower()
-                    if "rate_limit" in error_str or "429" in error_str:
-                        ai_response = f"✅ Done! {tool_result.get('message', 'Operation completed successfully.')}"
-                    else:
-                        logger.error(f"Summary generation failed: {e}")
-                        ai_response = f"Done! {tool_result.get('message', 'Operation completed successfully.')}"
+                    
+                    try:
+                        summary_response = llm.invoke([HumanMessage(content=summary_prompt)])
+                        ai_response = summary_response.content
+                    except Exception as e:
+                        error_str = str(e).lower()
+                        if "rate_limit" in error_str or "429" in error_str:
+                            ai_response = f"✅ Done! {tool_result.get('message', 'Operation completed successfully.')}"
+                        else:
+                            logger.error(f"Summary generation failed: {e}")
+                            ai_response = f"Done! {tool_result.get('message', 'Operation completed successfully.')}"
         else:
             ai_response = "I processed your request."
     
