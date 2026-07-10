@@ -29,27 +29,48 @@ A full-stack AI-powered CRM system for Healthcare Professional (HCP) interaction
 ## Project Structure
 
 ```
+assesment/
 ├── backend/
 │   ├── main.py                 # FastAPI application entry
-│   ├── config.py               # Configuration settings
-│   ├── database.py             # Database connection
-│   ├── models.py               # SQLAlchemy models
-│   ├── schemas.py              # Pydantic schemas
-│   ├── langgraph_agent.py      # LangGraph agent with 5 tools
+│   ├── config.py               # Configuration (DB, API keys, LLM model)
+│   ├── database.py             # SQLAlchemy database connection
+│   ├── models.py               # Database models (Interaction, ChatMessage)
+│   ├── schemas.py              # Pydantic validation schemas
+│   ├── langgraph_agent.py      # LangGraph AI agent with 5 tools
+│   ├── requirements.txt        # Python dependencies
+│   ├── .env                    # Environment variables
 │   └── routes/
-│       ├── interactions.py     # CRUD endpoints
-│       └── chat.py             # Chat endpoints
+│       ├── __init__.py         # Route imports
+│       ├── interactions.py     # CRUD API endpoints
+│       └── chat.py             # AI chat endpoints
 │
 ├── frontend/
-│   ├── src/
-│   │   ├── store/index.js      # Redux store
-│   │   ├── features/
-│   │   │   ├── interactions/   # Interaction management
-│   │   │   └── chat/           # AI chat interface
-│   │   └── components/
-│   │       └── Layout.jsx      # Navigation layout
-│   └── ...
+│   ├── index.html              # HTML entry point
+│   ├── package.json            # NPM dependencies
+│   ├── vite.config.js          # Vite configuration
+│   ├── netlify.toml            # Deployment config
+│   └── src/
+│       ├── main.jsx            # React entry point
+│       ├── App.jsx             # Router setup
+│       ├── index.css           # Global styles
+│       ├── store/
+│       │   └── index.js        # Redux store configuration
+│       ├── components/
+│       │   └── Layout.jsx      # Navigation bar
+│       └── features/
+│           ├── interactions/
+│           │   ├── LogInteractionForm.jsx   # Structured form
+│           │   ├── InteractionsPage.jsx     # All records list
+│           │   └── interactionSlice.js      # Redux slice
+│           ├── chat/
+│           │   ├── ChatInterface.jsx        # AI chat UI
+│           │   └── chatSlice.js             # Redux slice
+│           └── docs/
+│               └── DocsPage.jsx             # Documentation page
 │
+├── project-foto.png            # Homepage screenshot
+├── all-record.png              # All records screenshot
+├── docs-page.png               # Documentation screenshot
 └── README.md
 ```
 
