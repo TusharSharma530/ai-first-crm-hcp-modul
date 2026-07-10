@@ -200,17 +200,6 @@ const ChatInterface = () => {
           <div ref={messagesEndRef} />
         </div>
 
-        <div style={styles.quickBar}>
-          {quickActions.map((action, index) => (
-            <button key={index} onClick={() => {
-              dispatch(addUserMessage(action.label));
-              dispatch(sendMessage({ message: action.label, sessionId: sessionId || null }));
-            }} style={styles.quickBtn}>
-              {action.icon} {action.label}
-            </button>
-          ))}
-        </div>
-
         <form onSubmit={handleSubmit} style={styles.inputArea}>
           <input
             type="text" value={input} onChange={(e) => setInput(e.target.value)}
