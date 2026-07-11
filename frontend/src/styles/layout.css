@@ -167,18 +167,18 @@
 }
 
 .crm-card-header-icon.blue {
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+  background: #dbeafe;
+  box-shadow: none;
 }
 
 .crm-card-header-icon.green {
-  background: linear-gradient(135deg, #10b981, #059669);
-  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+  background: #d1fae5;
+  box-shadow: none;
 }
 
 .crm-card-header-icon.amber {
-  background: linear-gradient(135deg, #f59e0b, #d97706);
-  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+  background: #fef3c7;
+  box-shadow: none;
 }
 
 .crm-card-header-icon.purple {
