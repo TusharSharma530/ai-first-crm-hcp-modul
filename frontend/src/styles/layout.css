@@ -949,7 +949,8 @@
 /* Responsive */
 @media (max-width: 768px) {
   .premium-save-btn {
-    width: 100%;
+    flex: none;
+    width: auto;
     height: 48px;
     padding: 0 24px;
   }
@@ -1052,7 +1053,8 @@
 
 @media (max-width: 768px) {
   .submit-complaint-btn {
-    width: 100%;
+    flex: none;
+    width: auto;
     height: 48px;
     padding: 0 24px;
   }
@@ -1358,6 +1360,10 @@
   }
 
   .header-profile-wrapper {
+    display: none;
+  }
+
+  .header-right > .header-nav-pill {
     display: none;
   }
 
