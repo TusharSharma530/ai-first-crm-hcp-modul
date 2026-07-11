@@ -96,7 +96,7 @@ const EditDrawer = ({ interaction, isOpen, onClose, onSave }) => {
       >
         <div className="drawer-header">
           <div className="drawer-header-left">
-            <div className="drawer-icon" style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)' }}>✏️</div>
+            <div className="drawer-icon" style={{ background: '#fff7ed', border: '1.5px solid #fed7aa' }}>✏️</div>
             <div>
               <h2 id="edit-drawer-title" className="drawer-title">Edit Interaction</h2>
               <p className="drawer-subtitle">Update details for {interaction.hcp_name}</p>
@@ -274,11 +274,26 @@ const EditDrawer = ({ interaction, isOpen, onClose, onSave }) => {
           </button>
           <button 
             type="submit" 
-            className="btn btn-primary"
+            className="btn btn-primary premium-save-btn"
             onClick={handleSubmit}
             disabled={saving}
+            aria-label={saving ? 'Saving changes...' : 'Save changes'}
           >
-            {saving ? '⏳ Saving...' : '💾 Save Changes'}
+            {saving ? (
+              <>
+                <span className="premium-save-spinner"></span>
+                <span>Saving...</span>
+              </>
+            ) : (
+              <>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                  <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                  <polyline points="7 3 7 8 15 8"></polyline>
+                </svg>
+                <span>Save Changes</span>
+              </>
+            )}
           </button>
         </div>
       </div>

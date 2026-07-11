@@ -1978,3 +1978,115 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ============================================
+   Delete Confirmation Modal
+   ============================================ */
+.delete-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: fadeIn 0.2s ease;
+}
+
+.delete-modal {
+  background: white;
+  border-radius: 16px;
+  padding: 32px;
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  animation: slideUp 0.3s ease;
+}
+
+.delete-modal-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #fef2f2;
+  border: 2px solid #fecaca;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+  color: #dc2626;
+}
+
+.delete-modal-title {
+  font-family: 'Inter', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 12px;
+}
+
+.delete-modal-text {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.95rem;
+  color: #4b5563;
+  margin: 0 0 8px;
+  line-height: 1.5;
+}
+
+.delete-modal-subtext {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.8rem;
+  color: #9ca3af;
+  margin: 0 0 24px;
+}
+
+.delete-modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.delete-modal-btn {
+  flex: 1;
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: none;
+}
+
+.delete-modal-btn.cancel {
+  background: #f9fafb;
+  color: #374151;
+  border: 1px solid #e5e7eb;
+}
+
+.delete-modal-btn.cancel:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.delete-modal-btn.confirm {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1.5px solid #fecaca;
+}
+
+.delete-modal-btn.confirm:hover {
+  background: #fee2e2;
+  border-color: #fca5a5;
+}
+
+.delete-modal-btn.confirm svg {
+  flex-shrink: 0;
+}

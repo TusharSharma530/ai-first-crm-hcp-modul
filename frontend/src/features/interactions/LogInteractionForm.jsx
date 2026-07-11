@@ -268,8 +268,34 @@ const LogInteractionForm = () => {
             <button type="button" onClick={autoFill} className="crm-btn crm-btn-success">
               ⚡ Auto Fill
             </button>
-            <button type="submit" disabled={status === 'loading'} className="crm-btn crm-btn-primary">
-              {status === 'loading' ? '⏳ Logging...' : '💾 Log Interaction'}
+            <button 
+              type="submit" 
+              disabled={status === 'loading'} 
+              className={`premium-save-btn ${status === 'success' ? 'success' : ''} ${status === 'error' ? 'error' : ''}`}
+              aria-label={status === 'loading' ? 'Saving interaction...' : 'Save interaction'}
+            >
+              {status === 'loading' ? (
+                <>
+                  <span className="premium-save-spinner"></span>
+                  <span>Saving...</span>
+                </>
+              ) : status === 'success' ? (
+                <>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                  <span>Interaction Saved</span>
+                </>
+              ) : (
+                <>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                    <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                    <polyline points="7 3 7 8 15 8"></polyline>
+                  </svg>
+                  <span>Save Interaction</span>
+                </>
+              )}
             </button>
           </div>
         </form>

@@ -91,7 +91,7 @@ const AIInsightsDrawer = ({ interaction, isOpen, onClose }) => {
       >
         <div className="drawer-header" style={{ background: 'linear-gradient(135deg, #faf5ff, #ede9fe)' }}>
           <div className="drawer-header-left">
-            <div className="drawer-icon" style={{ background: 'linear-gradient(135deg, #a855f7, #9333ea)' }}>🤖</div>
+            <div className="drawer-icon" style={{ background: '#faf5ff', border: '1.5px solid #e9d5ff' }}>🤖</div>
             <div>
               <h2 id="ai-drawer-title" className="drawer-title">AI Insights</h2>
               <p className="drawer-subtitle">AI-powered analysis for {interaction.hcp_name}</p>

@@ -214,11 +214,7 @@ const InteractionTable = ({
                       </button>
                       <button
                         className="action-btn delete"
-                        onClick={() => {
-                          if (window.confirm(`Are you sure you want to delete this interaction with ${interaction.hcp_name}?`)) {
-                            onDelete(interaction.id);
-                          }
-                        }}
+                        onClick={() => onDelete(interaction)}
                         data-tooltip="Delete"
                         aria-label={`Delete interaction with ${interaction.hcp_name}`}
                       >
