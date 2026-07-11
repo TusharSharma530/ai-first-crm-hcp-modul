@@ -59,7 +59,7 @@ const ChatInterface = () => {
             <p className="crm-card-subtitle">Powered by LangGraph + Groq</p>
           </div>
         </div>
-        <button onClick={() => dispatch(clearChat())} className="crm-btn" style={{ flex: 'none', padding: '8px 16px', backgroundColor: '#f3f4f6', color: '#374151', border: '1px solid #d1d5db', fontSize: '0.8rem' }} data-tooltip="Clear">Clear</button>
+        <button onClick={() => dispatch(clearChat())} className="crm-btn" style={{ flex: 'none', padding: '8px 16px', backgroundColor: '#f3f4f6', color: '#374151', border: '1px solid #d1d5db', fontSize: '0.8rem' }}>Clear</button>
       </div>
 
       <div className="crm-chat">

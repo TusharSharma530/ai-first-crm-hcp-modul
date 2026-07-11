@@ -108,6 +108,9 @@ const LogInteractionForm = () => {
             <p className="crm-card-subtitle">Record your healthcare professional engagement</p>
           </div>
         </div>
+        <button type="button" onClick={autoFill} className="crm-btn-icon" data-tooltip="Auto Fill">
+          📋
+        </button>
       </div>
 
       <div className="crm-card-body">
@@ -265,10 +268,7 @@ const LogInteractionForm = () => {
           </div>
 
           <div className="crm-btn-row">
-            <button type="button" onClick={autoFill} className="crm-btn crm-btn-success">
-              ⚡ Auto Fill
-            </button>
-            <button 
+            <button
               type="submit" 
               disabled={status === 'loading'} 
               className={`premium-save-btn ${status === 'success' ? 'success' : ''} ${status === 'error' ? 'error' : ''}`}

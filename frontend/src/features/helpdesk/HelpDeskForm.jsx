@@ -118,6 +118,9 @@ const HelpDeskForm = () => {
             <p className="crm-card-subtitle">Report issues & get support</p>
           </div>
         </div>
+        <button type="button" onClick={autoFill} className="crm-btn-icon" data-tooltip="Auto Fill">
+          📋
+        </button>
       </div>
 
       <div className="crm-card-body">
@@ -229,10 +232,7 @@ const HelpDeskForm = () => {
           </div>
 
           <div className="crm-btn-row">
-            <button type="button" onClick={autoFill} className="crm-btn crm-btn-success" data-tooltip="Auto Fill">
-              ⚡ Auto Fill
-            </button>
-            <button 
+            <button
               type="submit" 
               disabled={status === 'loading'} 
               className={`submit-complaint-btn ${status === 'success' ? 'success' : ''} ${status === 'error' ? 'error' : ''}`}
