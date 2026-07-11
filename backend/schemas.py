@@ -186,3 +186,39 @@ class TokenResponse(BaseModel):
 
 class TokenRefresh(BaseModel):
     refresh_token: str
+
+
+class ComplaintCreate(BaseModel):
+    subject: str
+    description: Optional[str] = None
+    category: str = "bug"
+    priority: str = "medium"
+    assignee: Optional[str] = None
+    reporter_name: Optional[str] = None
+    reporter_email: Optional[str] = None
+
+
+class ComplaintUpdate(BaseModel):
+    subject: Optional[str] = None
+    description: Optional[str] = None
+    category: Optional[str] = None
+    status: Optional[str] = None
+    priority: Optional[str] = None
+    assignee: Optional[str] = None
+
+
+class ComplaintResponse(BaseModel):
+    id: int
+    subject: str
+    description: Optional[str] = None
+    category: str
+    status: str
+    priority: str
+    assignee: Optional[str] = None
+    reporter_name: Optional[str] = None
+    reporter_email: Optional[str] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True

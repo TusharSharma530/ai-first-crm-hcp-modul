@@ -1,50 +1,112 @@
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import api from '../../services/api';
 
-const initialComplaints = [
-  { id: 1, subject: 'Login page not loading', category: 'bug', status: 'resolved', priority: 'high', date: '2026-07-08', assignee: 'Dev Team', name: 'Dr. Rajesh', email: 'rajesh@hospital.com', description: 'Login page stuck on loading spinner' },
-  { id: 2, subject: 'Data export crashing', category: 'bug', status: 'pending', priority: 'critical', date: '2026-07-09', assignee: 'Backend Team', name: 'Dr. Priya', email: 'priya@clinic.com', description: 'CSV export fails with 100+ records' },
-  { id: 3, subject: 'Mobile view broken', category: 'ui', status: 'in-progress', priority: 'medium', date: '2026-07-09', assignee: 'Frontend Team', name: 'Dr. Amit', email: 'amit@medical.org', description: 'Form fields overlap on mobile' },
-  { id: 4, subject: 'Slow page load time', category: 'performance', status: 'resolved', priority: 'high', date: '2026-07-07', assignee: 'DevOps', name: 'Dr. Sneha', email: 'sneha@healthcare.in', description: 'Interactions page takes 10+ seconds' },
-  { id: 5, subject: 'Search showing wrong data', category: 'data', status: 'pending', priority: 'critical', date: '2026-07-10', assignee: 'Backend Team', name: 'Dr. Rahul', email: 'rahul@doctor.net', description: 'Search returns other users data' },
-  { id: 6, subject: 'Add dark mode', category: 'feature', status: 'in-progress', priority: 'low', date: '2026-07-06', assignee: 'Frontend Team', name: 'Dr. Rajesh', email: 'rajesh@hospital.com', description: 'Request for dark mode theme' },
-  { id: 7, subject: 'CSV export missing columns', category: 'bug', status: 'resolved', priority: 'medium', date: '2026-07-08', assignee: 'Dev Team', name: 'Dr. Priya', email: 'priya@clinic.com', description: 'Summary and topics columns missing' },
-  { id: 8, subject: 'Chat not responding', category: 'bug', status: 'pending', priority: 'high', date: '2026-07-10', assignee: 'AI Team', name: 'Dr. Amit', email: 'amit@medical.org', description: 'AI chat shows Thinking forever' },
-  { id: 9, subject: 'Dashboard charts lag', category: 'performance', status: 'resolved', priority: 'medium', date: '2026-07-05', assignee: 'DevOps', name: 'Dr. Sneha', email: 'sneha@healthcare.in', description: 'Analytics charts slow to render' },
-  { id: 10, subject: 'User session timeout', category: 'security', status: 'in-progress', priority: 'high', date: '2026-07-09', assignee: 'Security Team', name: 'Dr. Rahul', email: 'rahul@doctor.net', description: 'Sessions expire too quickly' },
-  { id: 11, subject: 'Form validation missing', category: 'ui', status: 'resolved', priority: 'low', date: '2026-07-04', assignee: 'Frontend Team', name: 'Dr. Rajesh', email: 'rajesh@hospital.com', description: 'Required fields not validated' },
-  { id: 12, subject: 'API rate limiting', category: 'security', status: 'pending', priority: 'critical', date: '2026-07-10', assignee: 'Backend Team', name: 'Dr. Priya', email: 'priya@clinic.com', description: 'API returns 429 too often' },
-];
+export const fetchComplaints = createAsyncThunk(
+  'complaints/fetchComplaints',
+  async (_, { rejectWithValue }) => {
+    try {
+      const { data } = await api.get('/api/complaints/');
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.detail || 'Failed to fetch complaints');
+    }
+  }
+);
+
+export const addComplaintAsync = createAsyncThunk(
+  'complaints/addComplaint',
+  async (complaintData, { rejectWithValue }) => {
+    try {
+      const payload = {
+        subject: complaintData.subject,
+        description: complaintData.description || complaintData.steps || '',
+        category: complaintData.category,
+        priority: complaintData.priority,
+        reporter_name: complaintData.name || '',
+        reporter_email: complaintData.email || '',
+      };
+      const { data } = await api.post('/api/complaints/', payload);
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.detail || 'Failed to add complaint');
+    }
+  }
+);
+
+export const updateComplaintStatusAsync = createAsyncThunk(
+  'complaints/updateStatus',
+  async ({ id, status }, { rejectWithValue }) => {
+    try {
+      const { data } = await api.put(`/api/complaints/${id}`, { status });
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.detail || 'Failed to update complaint');
+    }
+  }
+);
+
+export const deleteComplaintAsync = createAsyncThunk(
+  'complaints/deleteComplaint',
+  async (id, { rejectWithValue }) => {
+    try {
+      await api.delete(`/api/complaints/${id}`);
+      return id;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.detail || 'Failed to delete complaint');
+    }
+  }
+);
 
 const complaintsSlice = createSlice({
   name: 'complaints',
   initialState: {
-    items: initialComplaints,
-    nextId: 13,
+    items: [],
+    loading: false,
+    error: null,
   },
   reducers: {
-    addComplaint: (state, action) => {
-      const newComplaint = {
-        ...action.payload,
-        id: state.nextId,
-        status: 'pending',
-        date: new Date().toISOString().slice(0, 10),
-        assignee: 'Unassigned',
-      };
-      state.items.unshift(newComplaint);
-      state.nextId += 1;
+    clearComplaintError(state) {
+      state.error = null;
     },
-    updateComplaintStatus: (state, action) => {
-      const { id, status } = action.payload;
-      const complaint = state.items.find(c => c.id === id);
-      if (complaint) {
-        complaint.status = status;
-      }
-    },
-    deleteComplaint: (state, action) => {
-      state.items = state.items.filter(c => c.id !== action.payload);
-    },
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchComplaints.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchComplaints.fulfilled, (state, action) => {
+        state.loading = false;
+        state.items = action.payload;
+      })
+      .addCase(fetchComplaints.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+      .addCase(addComplaintAsync.fulfilled, (state, action) => {
+        state.items.unshift(action.payload);
+      })
+      .addCase(addComplaintAsync.rejected, (state, action) => {
+        state.error = action.payload;
+      })
+
+      .addCase(updateComplaintStatusAsync.fulfilled, (state, action) => {
+        const idx = state.items.findIndex(c => c.id === action.payload.id);
+        if (idx !== -1) state.items[idx] = action.payload;
+      })
+      .addCase(updateComplaintStatusAsync.rejected, (state, action) => {
+        state.error = action.payload;
+      })
+
+      .addCase(deleteComplaintAsync.fulfilled, (state, action) => {
+        state.items = state.items.filter(c => c.id !== action.payload);
+      })
+      .addCase(deleteComplaintAsync.rejected, (state, action) => {
+        state.error = action.payload;
+      });
   },
 });
 
-export const { addComplaint, updateComplaintStatus, deleteComplaint } = complaintsSlice.actions;
+export const { clearComplaintError } = complaintsSlice.actions;
 export default complaintsSlice.reducer;

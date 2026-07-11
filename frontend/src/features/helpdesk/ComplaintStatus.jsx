@@ -1,12 +1,16 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { updateComplaintStatus } from './complaintsSlice';
+import { updateComplaintStatusAsync, fetchComplaints } from './complaintsSlice';
 import '../../styles/complaint-status.css';
 
 const ComplaintStatus = () => {
   const dispatch = useDispatch();
-  const { items: complaintsData } = useSelector(state => state.complaints);
+  const { items: complaintsData, loading } = useSelector(state => state.complaints);
   const [filter, setFilter] = useState('all');
+
+  useEffect(() => {
+    dispatch(fetchComplaints());
+  }, [dispatch]);
 
   const statusConfig = {
     'resolved': { color: '#10b981', bg: '#ecfdf5', icon: '✅', label: 'Resolved' },
@@ -46,7 +50,7 @@ const ComplaintStatus = () => {
   const inProgressPercent = counts.total > 0 ? (counts['in-progress'] / counts.total) * 100 : 0;
 
   const handleStatusChange = (id, newStatus) => {
-    dispatch(updateComplaintStatus({ id, status: newStatus }));
+    dispatch(updateComplaintStatusAsync({ id, status: newStatus }));
   };
 
   return (
@@ -138,7 +142,7 @@ const ComplaintStatus = () => {
                     <div className="complaint-item-info">
                       <p className="complaint-item-subject">{complaint.subject}</p>
                       <p className="complaint-item-meta">
-                        {complaint.assignee} • {complaint.date}
+                        {complaint.reporter_name || complaint.assignee || 'Unassigned'} • {complaint.created_at ? new Date(complaint.created_at).toLocaleDateString() : ''}
                       </p>
                     </div>
                   </div>

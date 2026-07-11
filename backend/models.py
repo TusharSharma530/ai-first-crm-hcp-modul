@@ -55,3 +55,19 @@ class ChatMessage(Base):
     role = Column(String(50), nullable=False)
     content = Column(Text, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class Complaint(Base):
+    __tablename__ = "complaints"
+
+    id = Column(Integer, primary_key=True, index=True)
+    subject = Column(String(500), nullable=False)
+    description = Column(Text, nullable=True)
+    category = Column(String(50), nullable=False, index=True)
+    status = Column(String(20), default="pending", nullable=False, index=True)
+    priority = Column(String(20), default="medium", nullable=False)
+    assignee = Column(String(255), nullable=True)
+    reporter_name = Column(String(255), nullable=True)
+    reporter_email = Column(String(255), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useDispatch } from 'react-redux';
-import { addComplaint } from './complaintsSlice';
+import { addComplaintAsync } from './complaintsSlice';
 
 const HelpDeskForm = () => {
   const dispatch = useDispatch();
@@ -75,21 +75,24 @@ const HelpDeskForm = () => {
     e.preventDefault();
     setStatus('loading');
 
-    setTimeout(() => {
-      dispatch(addComplaint({
-        name: formData.name,
-        email: formData.email,
-        category: formData.category,
-        priority: formData.priority,
-        subject: formData.subject,
-        description: formData.description,
-        steps: formData.steps,
-      }));
-
-      setStatus('success');
-      setFormData({ name: '', email: '', category: 'bug', priority: 'medium', subject: '', description: '', steps: '' });
-      setTimeout(() => setStatus(null), 3000);
-    }, 800);
+    dispatch(addComplaintAsync({
+      name: formData.name,
+      email: formData.email,
+      category: formData.category,
+      priority: formData.priority,
+      subject: formData.subject,
+      description: formData.description,
+      steps: formData.steps,
+    })).unwrap()
+      .then(() => {
+        setStatus('success');
+        setFormData({ name: '', email: '', category: 'bug', priority: 'medium', subject: '', description: '', steps: '' });
+        setTimeout(() => setStatus(null), 3000);
+      })
+      .catch(() => {
+        setStatus('error');
+        setTimeout(() => setStatus(null), 3000);
+      });
   };
 
   const priorityConfig = {
