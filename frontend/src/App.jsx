@@ -17,16 +17,20 @@ function App() {
         <Layout>
           <Routes>
             <Route path="/" element={
-              <div className="home-grid">
-                <div className="home-form-wrapper">
-                  <LogInteractionForm />
-                </div>
-                <div className="home-sidebar">
-                  <div className="home-chat-wrapper">
+              <div className="home-page">
+                <div className="home-row">
+                  <div className="home-card">
+                    <LogInteractionForm />
+                  </div>
+                  <div className="home-card">
                     <ChatInterface />
                   </div>
-                  <div className="helpdesk-row">
+                </div>
+                <div className="home-row">
+                  <div className="home-card">
                     <HelpDeskForm />
+                  </div>
+                  <div className="home-card">
                     <ComplaintStatus />
                   </div>
                 </div>

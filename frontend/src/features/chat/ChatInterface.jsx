@@ -35,11 +35,7 @@ const ChatInterface = () => {
     };
     const t = toolNames[tool] || { text: tool, icon: '🔧', color: '#6b7280' };
     return (
-      <span style={{
-        display: 'inline-flex', alignItems: 'center', gap: '4px',
-        padding: '2px 8px', borderRadius: '12px', fontSize: '0.7rem',
-        backgroundColor: t.color + '15', color: t.color, fontWeight: 500
-      }}>
+      <span className="crm-tool-badge" style={{ backgroundColor: t.color + '15', color: t.color }}>
         {t.icon} {t.text}
       </span>
     );
@@ -53,107 +49,32 @@ const ChatInterface = () => {
     { label: "Show analytics", icon: "📊" },
   ];
 
-  const styles = {
-    container: {
-      maxWidth: '100%', height: 'calc(100vh - 160px)',
-      display: 'flex', flexDirection: 'column'
-    },
-    header: {
-      display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem'
-    },
-    headerLeft: { display: 'flex', alignItems: 'center', gap: '10px' },
-    headerIcon: {
-      width: '36px', height: '36px',
-      background: 'linear-gradient(135deg, #10b981, #059669)',
-      borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontSize: '18px', boxShadow: '0 2px 8px rgba(16,185,129,0.3)'
-    },
-    title: { fontFamily: 'Inter, sans-serif', fontSize: '1.25rem', fontWeight: 600, color: '#1a1a2e', margin: 0 },
-    subtitle: { fontFamily: 'Inter, sans-serif', fontSize: '0.75rem', color: '#666', margin: 0 },
-    clearBtn: {
-      padding: '6px 12px', backgroundColor: '#f3f4f6', color: '#374151',
-      border: '1px solid #d1d5db', borderRadius: '6px', cursor: 'pointer',
-      fontFamily: 'Inter, sans-serif', fontSize: '0.8rem'
-    },
-    chatBox: {
-      flex: 1, backgroundColor: 'white', borderRadius: '12px',
-      boxShadow: '0 1px 3px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.04)',
-      border: '1px solid #e8eaed', overflow: 'hidden', display: 'flex', flexDirection: 'column'
-    },
-    messages: {
-      flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex',
-      flexDirection: 'column', gap: '0.75rem'
-    },
-    userMsg: {
-      display: 'flex', justifyContent: 'flex-end'
-    },
-    userBubble: {
-      maxWidth: '80%', padding: '10px 14px', borderRadius: '16px 16px 4px 16px',
-      background: 'linear-gradient(135deg, #1a73e8, #1557b0)',
-      color: 'white', fontFamily: 'Inter, sans-serif', fontSize: '0.9rem', lineHeight: '1.4'
-    },
-    aiMsg: {
-      display: 'flex', justifyContent: 'flex-start'
-    },
-    aiBubble: {
-      maxWidth: '80%', padding: '10px 14px', borderRadius: '16px 16px 16px 4px',
-      backgroundColor: '#f3f4f6', color: '#1f2937', fontFamily: 'Inter, sans-serif',
-      fontSize: '0.9rem', lineHeight: '1.4'
-    },
-    inputArea: {
-      padding: '12px', borderTop: '1px solid #e8eaed', display: 'flex', gap: '8px',
-      backgroundColor: '#fafafa'
-    },
-    input: {
-      flex: 1, padding: '10px 14px', border: '1px solid #d1d5db', borderRadius: '20px',
-      fontSize: '0.9rem', fontFamily: 'Inter, sans-serif', outline: 'none'
-    },
-    sendBtn: {
-      padding: '10px 20px',
-      background: status === 'loading' || !input.trim() ? '#d1d5db' : 'linear-gradient(135deg, #10b981, #059669)',
-      color: 'white', border: 'none', borderRadius: '20px', cursor: status === 'loading' || !input.trim() ? 'not-allowed' : 'pointer',
-      fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: '0.9rem'
-    },
-    quickBar: {
-      padding: '8px 12px', borderTop: '1px solid #e8eaed', display: 'flex', gap: '6px', flexWrap: 'wrap'
-    },
-    quickBtn: {
-      padding: '4px 10px', backgroundColor: '#eff6ff', border: '1px solid #bfdbfe',
-      borderRadius: '12px', cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontSize: '0.75rem', color: '#1d4ed8'
-    }
-  };
-
   return (
-    <div style={styles.container}>
-      <div style={styles.header}>
-        <div style={styles.headerLeft}>
-          <div style={styles.headerIcon}>🤖</div>
+    <div className="crm-card">
+      <div className="crm-card-header">
+        <div className="crm-card-header-left">
+          <div className="crm-card-header-icon green">🤖</div>
           <div>
-            <h2 style={styles.title}>AI Assistant</h2>
-            <p style={styles.subtitle}>Powered by LangGraph + Groq</p>
+            <h2 className="crm-card-title">AI Assistant</h2>
+            <p className="crm-card-subtitle">Powered by LangGraph + Groq</p>
           </div>
         </div>
-        <button onClick={() => dispatch(clearChat())} style={styles.clearBtn} data-tooltip="Clear">🗑️ Clear</button>
+        <button onClick={() => dispatch(clearChat())} className="crm-btn" style={{ flex: 'none', padding: '8px 16px', backgroundColor: '#f3f4f6', color: '#374151', border: '1px solid #d1d5db', fontSize: '0.8rem' }} data-tooltip="Clear">🗑️ Clear</button>
       </div>
 
-      <div style={styles.chatBox}>
-        <div style={styles.messages}>
+      <div className="crm-chat">
+        <div className="crm-chat-messages">
           {messages.length === 0 && (
-            <div style={{ textAlign: 'center', padding: '2rem 1rem', color: '#6b7280' }}>
-              <div style={{ fontSize: '48px', marginBottom: '12px' }}>💬</div>
-              <h3 style={{ fontFamily: 'Inter, sans-serif', color: '#374151', fontSize: '1rem', marginBottom: '8px' }}>
-                How can I help you?
-              </h3>
-              <p style={{ fontSize: '0.85rem', marginBottom: '1rem' }}>
-                I can log interactions, search, get profiles & analytics
-              </p>
-
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', justifyContent: 'center' }}>
+            <div className="crm-chat-empty">
+              <div className="crm-chat-empty-icon">💬</div>
+              <h3 className="crm-chat-empty-title">How can I help you?</h3>
+              <p className="crm-chat-empty-desc">I can log interactions, search, get profiles & analytics</p>
+              <div className="crm-chat-quick-actions">
                 {quickActions.map((action, index) => (
                   <button key={index} onClick={() => {
                     dispatch(addUserMessage(action.label));
                     dispatch(sendMessage({ message: action.label, sessionId: sessionId || null }));
-                  }} style={styles.quickBtn}>
+                  }} className="crm-chat-quick-btn">
                     {action.icon} {action.label}
                   </button>
                 ))}
@@ -162,13 +83,8 @@ const ChatInterface = () => {
           )}
 
           {messages.map((msg, index) => (
-            <div key={index} style={msg.role === 'user' ? styles.userMsg : styles.aiMsg}>
-              <div style={msg.role === 'user' ? styles.userBubble : {
-                ...styles.aiBubble,
-                backgroundColor: msg.isError ? '#fef2f2' : '#f3f4f6',
-                border: msg.isError ? '1px solid #fca5a5' : 'none',
-                color: msg.isError ? '#991b1b' : '#1f2937'
-              }}>
+            <div key={index} className={`crm-msg ${msg.role === 'user' ? 'crm-msg-user' : 'crm-msg-ai'}`}>
+              <div className={`crm-msg-bubble ${msg.role === 'user' ? 'crm-msg-bubble-user' : 'crm-msg-bubble-ai'} ${msg.isError ? 'crm-msg-bubble-error' : ''}`}>
                 <div>{msg.isError && '⚠️ '}{msg.content}</div>
                 {msg.extractedData && msg.extractedData.profile && (
                   <HCPProfileCard profile={msg.extractedData.profile} />
@@ -183,8 +99,8 @@ const ChatInterface = () => {
           ))}
           
           {status === 'loading' && (
-            <div style={styles.aiMsg}>
-              <div style={{ ...styles.aiBubble, display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <div className="crm-msg crm-msg-ai">
+              <div className="crm-msg-bubble crm-msg-bubble-ai" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <span style={{ animation: 'pulse 1.5s infinite' }}>⏳</span>
                 <span style={{ fontSize: '0.85rem', color: '#6b7280' }}>Thinking...</span>
               </div>
@@ -194,16 +110,14 @@ const ChatInterface = () => {
           <div ref={messagesEndRef} />
         </div>
 
-        <form onSubmit={handleSubmit} style={styles.inputArea}>
+        <form onSubmit={handleSubmit} className="crm-chat-input">
           <input
             type="text" value={input} onChange={(e) => setInput(e.target.value)}
             placeholder="Type your message..."
             disabled={status === 'loading'}
-            style={styles.input}
-            onFocus={(e) => { e.target.style.borderColor = '#10b981'; e.target.style.boxShadow = '0 0 0 3px rgba(16,185,129,0.1)'; }}
-            onBlur={(e) => { e.target.style.borderColor = '#d1d5db'; e.target.style.boxShadow = 'none'; }}
+            className="crm-chat-text-input"
           />
-          <button type="submit" disabled={status === 'loading' || !input.trim()} style={styles.sendBtn} data-tooltip="Send">
+          <button type="submit" disabled={status === 'loading' || !input.trim()} className="crm-chat-send-btn" data-tooltip="Send">
             Send ➤
           </button>
         </form>

@@ -1,7 +1,9 @@
 import { useState } from 'react';
-import '../../styles/helpdesk.css';
+import { useDispatch } from 'react-redux';
+import { addComplaint } from './complaintsSlice';
 
 const HelpDeskForm = () => {
+  const dispatch = useDispatch();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -69,14 +71,25 @@ const HelpDeskForm = () => {
     });
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     setStatus('loading');
+
     setTimeout(() => {
+      dispatch(addComplaint({
+        name: formData.name,
+        email: formData.email,
+        category: formData.category,
+        priority: formData.priority,
+        subject: formData.subject,
+        description: formData.description,
+        steps: formData.steps,
+      }));
+
       setStatus('success');
       setFormData({ name: '', email: '', category: 'bug', priority: 'medium', subject: '', description: '', steps: '' });
       setTimeout(() => setStatus(null), 3000);
-    }, 1000);
+    }, 800);
   };
 
   const priorityConfig = {
@@ -96,131 +109,135 @@ const HelpDeskForm = () => {
   };
 
   return (
-    <div className="helpdesk-container">
-      <div className="helpdesk-header">
-        <div className="helpdesk-header-left">
-          <div className="helpdesk-header-icon">🎧</div>
+    <div className="crm-card">
+      <div className="crm-card-header">
+        <div className="crm-card-header-left">
+          <div className="crm-card-header-icon amber">🎧</div>
           <div>
-            <h2 className="helpdesk-title">Help Desk</h2>
-            <p className="helpdesk-subtitle">Report issues & get support</p>
+            <h2 className="crm-card-title">Help Desk</h2>
+            <p className="crm-card-subtitle">Report issues & get support</p>
           </div>
         </div>
-        <button className="helpdesk-autofill-btn" onClick={autoFill} data-tooltip="Auto Fill">
-          ⚡ Auto Fill
-        </button>
       </div>
 
-      {status === 'success' && (
-        <div className="helpdesk-alert helpdesk-alert-success">
-          <span>✅</span> Complaint submitted successfully! We'll get back to you soon.
-        </div>
-      )}
+      <div className="crm-card-body">
+        {status === 'success' && (
+          <div className="crm-alert crm-alert-success">
+            <span>✅</span> Complaint submitted successfully! We'll get back to you soon.
+          </div>
+        )}
 
-      {status === 'error' && (
-        <div className="helpdesk-alert helpdesk-alert-error">
-          <span>❌</span> Failed to submit. Please try again.
-        </div>
-      )}
+        {status === 'error' && (
+          <div className="crm-alert crm-alert-error">
+            <span>❌</span> Failed to submit. Please try again.
+          </div>
+        )}
 
-      <form onSubmit={handleSubmit} className="helpdesk-form">
-        <div className="helpdesk-row">
-          <div className="helpdesk-field">
-            <label className="helpdesk-label">Name *</label>
+        <form onSubmit={handleSubmit} className="crm-form">
+          <div className="crm-form-row">
+            <div className="crm-field">
+              <label className="crm-label">Name <span className="required">*</span></label>
+              <input
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                required
+                className="crm-input"
+                placeholder="Your name"
+              />
+            </div>
+            <div className="crm-field">
+              <label className="crm-label">Email <span className="required">*</span></label>
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                required
+                className="crm-input"
+                placeholder="your@email.com"
+              />
+            </div>
+          </div>
+
+          <div className="crm-form-row">
+            <div className="crm-field">
+              <label className="crm-label">Category <span className="required">*</span></label>
+              <select
+                name="category"
+                value={formData.category}
+                onChange={handleChange}
+                className="crm-select"
+              >
+                {Object.entries(categoryConfig).map(([key, config]) => (
+                  <option key={key} value={key}>{config.icon} {config.label}</option>
+                ))}
+              </select>
+            </div>
+            <div className="crm-field">
+              <label className="crm-label">Priority <span className="required">*</span></label>
+              <select
+                name="priority"
+                value={formData.priority}
+                onChange={handleChange}
+                className="crm-select"
+              >
+                {Object.entries(priorityConfig).map(([key, config]) => (
+                  <option key={key} value={key}>{config.icon} {key.charAt(0).toUpperCase() + key.slice(1)}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="crm-field">
+            <label className="crm-label">Subject <span className="required">*</span></label>
             <input
               type="text"
-              name="name"
-              value={formData.name}
+              name="subject"
+              value={formData.subject}
               onChange={handleChange}
               required
-              className="helpdesk-input"
-              placeholder="Your name"
+              className="crm-input"
+              placeholder="Brief summary of the issue"
             />
           </div>
-          <div className="helpdesk-field">
-            <label className="helpdesk-label">Email *</label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
+
+          <div className="crm-field">
+            <label className="crm-label">Description <span className="required">*</span></label>
+            <textarea
+              name="description"
+              value={formData.description}
               onChange={handleChange}
               required
-              className="helpdesk-input"
-              placeholder="your@email.com"
+              rows={3}
+              className="crm-textarea"
+              placeholder="Describe the issue in detail..."
             />
           </div>
-        </div>
 
-        <div className="helpdesk-row">
-          <div className="helpdesk-field">
-            <label className="helpdesk-label">Category *</label>
-            <select
-              name="category"
-              value={formData.category}
+          <div className="crm-field">
+            <label className="crm-label">Steps to Reproduce</label>
+            <textarea
+              name="steps"
+              value={formData.steps}
               onChange={handleChange}
-              className="helpdesk-input helpdesk-select"
-            >
-              {Object.entries(categoryConfig).map(([key, config]) => (
-                <option key={key} value={key}>{config.icon} {config.label}</option>
-              ))}
-            </select>
+              rows={3}
+              className="crm-textarea"
+              placeholder="1. Go to...&#10;2. Click on...&#10;3. Observe..."
+            />
           </div>
-          <div className="helpdesk-field">
-            <label className="helpdesk-label">Priority *</label>
-            <select
-              name="priority"
-              value={formData.priority}
-              onChange={handleChange}
-              className="helpdesk-input helpdesk-select"
-            >
-              {Object.entries(priorityConfig).map(([key, config]) => (
-                <option key={key} value={key}>{config.icon} {key.charAt(0).toUpperCase() + key.slice(1)}</option>
-              ))}
-            </select>
+
+          <div className="crm-btn-row">
+            <button type="button" onClick={autoFill} className="crm-btn crm-btn-success" data-tooltip="Auto Fill">
+              ⚡ Auto Fill
+            </button>
+            <button type="submit" disabled={status === 'loading'} className="crm-btn crm-btn-primary">
+              {status === 'loading' ? '⏳ Submitting...' : '🚀 Submit Complaint'}
+            </button>
           </div>
-        </div>
-
-        <div className="helpdesk-field">
-          <label className="helpdesk-label">Subject *</label>
-          <input
-            type="text"
-            name="subject"
-            value={formData.subject}
-            onChange={handleChange}
-            required
-            className="helpdesk-input"
-            placeholder="Brief summary of the issue"
-          />
-        </div>
-
-        <div className="helpdesk-field">
-          <label className="helpdesk-label">Description *</label>
-          <textarea
-            name="description"
-            value={formData.description}
-            onChange={handleChange}
-            required
-            rows={3}
-            className="helpdesk-input helpdesk-textarea"
-            placeholder="Describe the issue in detail..."
-          />
-        </div>
-
-        <div className="helpdesk-field">
-          <label className="helpdesk-label">Steps to Reproduce</label>
-          <textarea
-            name="steps"
-            value={formData.steps}
-            onChange={handleChange}
-            rows={3}
-            className="helpdesk-input helpdesk-textarea"
-            placeholder="1. Go to...&#10;2. Click on...&#10;3. Observe..."
-          />
-        </div>
-
-        <button type="submit" disabled={status === 'loading'} className="helpdesk-submit-btn">
-          {status === 'loading' ? '⏳ Submitting...' : '🚀 Submit Complaint'}
-        </button>
-      </form>
+        </form>
+      </div>
     </div>
   );
 };

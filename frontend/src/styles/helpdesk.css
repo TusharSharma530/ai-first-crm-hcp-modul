@@ -173,6 +173,21 @@
   cursor: not-allowed;
 }
 
+/* Button Row */
+.helpdesk-btn-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 0.5rem;
+}
+
+.helpdesk-btn-row .helpdesk-autofill-btn {
+  flex: 1;
+}
+
+.helpdesk-btn-row .helpdesk-submit-btn {
+  flex: 2;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .helpdesk-header {
@@ -181,16 +196,16 @@
     align-items: flex-start;
   }
 
-  .helpdesk-autofill-btn {
-    width: 100%;
-    justify-content: center;
-  }
-
   .helpdesk-row {
     grid-template-columns: 1fr;
   }
 
-  .helpdesk-submit-btn {
+  .helpdesk-btn-row {
+    flex-direction: column;
+  }
+
+  .helpdesk-btn-row .helpdesk-autofill-btn,
+  .helpdesk-btn-row .helpdesk-submit-btn {
     width: 100%;
   }
 }

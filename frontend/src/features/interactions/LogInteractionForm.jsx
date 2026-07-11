@@ -98,462 +98,251 @@ const LogInteractionForm = () => {
     }
   };
 
-  const styles = {
-    container: { maxWidth: '100%', margin: '0 auto' },
-    header: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: '12px',
-      marginBottom: '1.25rem'
-    },
-    headerIcon: {
-      width: '40px',
-      height: '40px',
-      background: 'linear-gradient(135deg, #1a73e8, #4285f4)',
-      borderRadius: '10px',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      fontSize: '20px',
-      boxShadow: '0 2px 8px rgba(26,115,232,0.3)'
-    },
-    title: {
-      fontFamily: 'Inter, sans-serif',
-      fontSize: '1.5rem',
-      fontWeight: 600,
-      color: '#1a1a2e',
-      margin: 0
-    },
-    subtitle: {
-      fontFamily: 'Inter, sans-serif',
-      fontSize: '0.85rem',
-      color: '#666',
-      margin: 0
-    },
-    card: {
-      backgroundColor: 'white',
-      padding: '1.5rem',
-      borderRadius: '12px',
-      boxShadow: '0 1px 3px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.04)',
-      border: '1px solid #e8eaed'
-    },
-    label: {
-      display: 'block',
-      marginBottom: '6px',
-      fontWeight: 500,
-      color: '#374151',
-      fontSize: '0.875rem',
-      fontFamily: 'Inter, sans-serif'
-    },
-    input: {
-      width: '100%',
-      padding: '10px 12px',
-      border: '1px solid #d1d5db',
-      borderRadius: '8px',
-      fontSize: '0.9rem',
-      fontFamily: 'Inter, sans-serif',
-      boxSizing: 'border-box',
-      transition: 'border-color 0.2s, box-shadow 0.2s',
-      outline: 'none'
-    },
-    row: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' },
-    field: { marginBottom: '1rem' },
-    button: {
-      width: '100%',
-      padding: '12px',
-      background: status === 'loading' ? '#93c5fd' : 'linear-gradient(135deg, #1a73e8, #1557b0)',
-      color: 'white',
-      border: 'none',
-      borderRadius: '8px',
-      fontSize: '1rem',
-      fontWeight: 600,
-      cursor: status === 'loading' ? 'not-allowed' : 'pointer',
-      fontFamily: 'Inter, sans-serif',
-      boxShadow: '0 2px 8px rgba(26,115,232,0.3)',
-      transition: 'all 0.2s',
-      marginTop: '0.5rem'
-    }
-  };
-
   return (
-    <div style={styles.container}>
-      <div style={styles.header}>
-        <div style={styles.headerIcon}>📝</div>
-        <div>
-          <h2 style={styles.title}>Log HCP Interaction</h2>
-          <p style={styles.subtitle}>Record your healthcare professional engagement</p>
+    <div className="crm-card">
+      <div className="crm-card-header">
+        <div className="crm-card-header-left">
+          <div className="crm-card-header-icon blue">📝</div>
+          <div>
+            <h2 className="crm-card-title">Log HCP Interaction</h2>
+            <p className="crm-card-subtitle">Record your healthcare professional engagement</p>
+          </div>
         </div>
       </div>
-      
-      {status === 'success' && (
-        <div style={{
-          padding: '12px 16px',
-          backgroundColor: '#ecfdf5',
-          border: '1px solid #6ee7b7',
-          borderRadius: '8px',
-          marginBottom: '1rem',
-          color: '#065f46',
-          fontSize: '0.9rem',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px'
-        }}>
-          <span style={{ fontSize: '18px' }}>✅</span> Interaction logged successfully!
-        </div>
-      )}
-      
-      {status === 'error' && (
-        <div style={{
-          padding: '12px 16px',
-          backgroundColor: '#fef2f2',
-          border: '1px solid #fca5a5',
-          borderRadius: '8px',
-          marginBottom: '1rem',
-          color: '#991b1b',
-          fontSize: '0.9rem',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px'
-        }}>
-          <span style={{ fontSize: '18px' }}>❌</span> Error logging interaction. Please try again.
-        </div>
-      )}
 
-      <form onSubmit={handleSubmit} style={styles.card}>
-        <div style={styles.field}>
-          <label style={styles.label}>HCP Name *</label>
-          <input
-            type="text"
-            name="hcp_name"
-            value={formData.hcp_name}
-            onChange={handleChange}
-            required
-            style={styles.input}
-            placeholder="e.g. Dr. Rajesh Sharma"
-            onFocus={(e) => { e.target.style.borderColor = '#1a73e8'; e.target.style.boxShadow = '0 0 0 3px rgba(26,115,232,0.1)'; }}
-            onBlur={(e) => { e.target.style.borderColor = '#d1d5db'; e.target.style.boxShadow = 'none'; }}
-          />
-        </div>
-
-        <div style={styles.row}>
-          <div>
-            <label style={styles.label}>Email</label>
-            <input
-              type="email"
-              name="hcp_email"
-              value={formData.hcp_email}
-              onChange={handleChange}
-              style={styles.input}
-              placeholder="doctor@hospital.com"
-              onFocus={(e) => { e.target.style.borderColor = '#1a73e8'; e.target.style.boxShadow = '0 0 0 3px rgba(26,115,232,0.1)'; }}
-              onBlur={(e) => { e.target.style.borderColor = '#d1d5db'; e.target.style.boxShadow = 'none'; }}
-            />
+      <div className="crm-card-body">
+        {status === 'success' && (
+          <div className="crm-alert crm-alert-success">
+            <span>✅</span> Interaction logged successfully!
           </div>
-          <div>
-            <label style={styles.label}>Specialty</label>
+        )}
+        
+        {status === 'error' && (
+          <div className="crm-alert crm-alert-error">
+            <span>❌</span> Error logging interaction. Please try again.
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="crm-form">
+          <div className="crm-field">
+            <label className="crm-label">HCP Name <span className="required">*</span></label>
             <input
               type="text"
-              name="hcp_specialty"
-              value={formData.hcp_specialty}
+              name="hcp_name"
+              value={formData.hcp_name}
               onChange={handleChange}
-              style={styles.input}
-              placeholder="e.g. Cardiology"
-              onFocus={(e) => { e.target.style.borderColor = '#1a73e8'; e.target.style.boxShadow = '0 0 0 3px rgba(26,115,232,0.1)'; }}
-              onBlur={(e) => { e.target.style.borderColor = '#d1d5db'; e.target.style.boxShadow = 'none'; }}
-            />
-          </div>
-        </div>
-
-        <div style={styles.field}>
-          <label style={styles.label}>Organization</label>
-          <input
-            type="text"
-            name="hcp_organization"
-            value={formData.hcp_organization}
-            onChange={handleChange}
-            style={styles.input}
-            placeholder="e.g. AIIMS Delhi"
-            onFocus={(e) => { e.target.style.borderColor = '#1a73e8'; e.target.style.boxShadow = '0 0 0 3px rgba(26,115,232,0.1)'; }}
-            onBlur={(e) => { e.target.style.borderColor = '#d1d5db'; e.target.style.boxShadow = 'none'; }}
-          />
-        </div>
-
-        <div style={styles.row}>
-          <div>
-            <label style={styles.label}>Interaction Type *</label>
-            <select
-              name="interaction_type"
-              value={formData.interaction_type}
-              onChange={handleChange}
-              style={{ ...styles.input, backgroundColor: 'white', cursor: 'pointer' }}
-            >
-              <option value="call">📞 Call</option>
-              <option value="meeting">🤝 Meeting</option>
-              <option value="email">📧 Email</option>
-              <option value="visit">🏥 Visit</option>
-              <option value="conference">🎤 Conference</option>
-            </select>
-          </div>
-          <div>
-            <label style={styles.label}>Date *</label>
-            <input
-              type="text"
-              value={formData.interaction_date ? formData.interaction_date.replace('T', ' ') : ''}
-              readOnly
-              onClick={openDatePicker}
               required
-              style={{
-                width: '100%',
-                padding: '10px 12px',
-                border: '1px solid #d1d5db',
-                borderRadius: '8px',
-                fontSize: '0.9rem',
-                fontFamily: 'Inter, sans-serif',
-                boxSizing: 'border-box',
-                cursor: 'pointer',
-                backgroundColor: 'white'
-              }}
-              placeholder="Click to select date & time"
+              className="crm-input"
+              placeholder="e.g. Dr. Rajesh Sharma"
             />
-            {showDatePicker && (
-              <div style={{
-                position: 'fixed',
-                top: 0, left: 0, right: 0, bottom: 0,
-                backgroundColor: 'rgba(0,0,0,0.5)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                zIndex: 1000
-              }}>
-                <div style={{
-                  backgroundColor: 'white',
-                  borderRadius: '12px',
-                  padding: '1.5rem',
-                  boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
-                  minWidth: '300px'
-                }}>
-                  <h3 style={{
-                    margin: '0 0 1rem 0',
-                    fontSize: '1rem',
-                    fontWeight: 600,
-                    color: '#1a1a2e',
-                    fontFamily: 'Inter, sans-serif'
-                  }}>📅 Select Date & Time</h3>
-                  
-                  <div style={{ marginBottom: '1rem' }}>
-                    <label style={{
-                      display: 'block',
-                      marginBottom: '6px',
-                      fontSize: '0.85rem',
-                      fontWeight: 500,
-                      color: '#374151',
-                      fontFamily: 'Inter, sans-serif'
-                    }}>Date</label>
-                    <input
-                      type="date"
-                      value={tempDate}
-                      onChange={(e) => setTempDate(e.target.value)}
-                      style={{
-                        width: '100%',
-                        padding: '10px',
-                        border: '1px solid #d1d5db',
-                        borderRadius: '8px',
-                        fontSize: '0.9rem',
-                        fontFamily: 'Inter, sans-serif',
-                        boxSizing: 'border-box'
-                      }}
-                    />
-                  </div>
-                  
-                  <div style={{ marginBottom: '1.5rem' }}>
-                    <label style={{
-                      display: 'block',
-                      marginBottom: '6px',
-                      fontSize: '0.85rem',
-                      fontWeight: 500,
-                      color: '#374151',
-                      fontFamily: 'Inter, sans-serif'
-                    }}>Time</label>
-                    <input
-                      type="time"
-                      value={tempTime}
-                      onChange={(e) => setTempTime(e.target.value)}
-                      style={{
-                        width: '100%',
-                        padding: '10px',
-                        border: '1px solid #d1d5db',
-                        borderRadius: '8px',
-                        fontSize: '0.9rem',
-                        fontFamily: 'Inter, sans-serif',
-                        boxSizing: 'border-box'
-                      }}
-                    />
-                  </div>
-                  
-                  <div style={{ display: 'flex', gap: '10px' }}>
-                    <button
-                      type="button"
-                      onClick={handleDateCancel}
-                      style={{
-                        flex: 1,
-                        padding: '10px',
-                        backgroundColor: '#f3f4f6',
-                        color: '#374151',
-                        border: '1px solid #d1d5db',
-                        borderRadius: '8px',
-                        cursor: 'pointer',
-                        fontWeight: 500,
-                        fontFamily: 'Inter, sans-serif'
-                      }}
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleDateSet}
-                      style={{
-                        flex: 1,
-                        padding: '10px',
-                        background: 'linear-gradient(135deg, #1a73e8, #1557b0)',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '8px',
-                        cursor: 'pointer',
-                        fontWeight: 500,
-                        fontFamily: 'Inter, sans-serif'
-                      }}
-                    >
-                      ✓ Set
-                    </button>
-                  </div>
-                </div>
+          </div>
+
+          <div className="crm-form-row">
+            <div className="crm-field">
+              <label className="crm-label">Email</label>
+              <input
+                type="email"
+                name="hcp_email"
+                value={formData.hcp_email}
+                onChange={handleChange}
+                className="crm-input"
+                placeholder="doctor@hospital.com"
+              />
+            </div>
+            <div className="crm-field">
+              <label className="crm-label">Specialty</label>
+              <input
+                type="text"
+                name="hcp_specialty"
+                value={formData.hcp_specialty}
+                onChange={handleChange}
+                className="crm-input"
+                placeholder="e.g. Cardiology"
+              />
+            </div>
+          </div>
+
+          <div className="crm-field">
+            <label className="crm-label">Organization</label>
+            <input
+              type="text"
+              name="hcp_organization"
+              value={formData.hcp_organization}
+              onChange={handleChange}
+              className="crm-input"
+              placeholder="e.g. AIIMS Delhi"
+            />
+          </div>
+
+          <div className="crm-form-row">
+            <div className="crm-field">
+              <label className="crm-label">Interaction Type <span className="required">*</span></label>
+              <select
+                name="interaction_type"
+                value={formData.interaction_type}
+                onChange={handleChange}
+                className="crm-select"
+              >
+                <option value="call">📞 Call</option>
+                <option value="meeting">🤝 Meeting</option>
+                <option value="email">📧 Email</option>
+                <option value="visit">🏥 Visit</option>
+                <option value="conference">🎤 Conference</option>
+              </select>
+            </div>
+            <div className="crm-field">
+              <label className="crm-label">Date <span className="required">*</span></label>
+              <input
+                type="text"
+                value={formData.interaction_date ? formData.interaction_date.replace('T', ' ') : ''}
+                readOnly
+                onClick={openDatePicker}
+                required
+                className="crm-input"
+                placeholder="Click to select date & time"
+                style={{ cursor: 'pointer' }}
+              />
+            </div>
+          </div>
+
+          <div className="crm-field">
+            <div className="crm-notes-wrapper">
+              <label className="crm-label">Notes <span className="required">*</span></label>
+              <textarea
+                name="notes"
+                value={formData.notes}
+                onChange={handleChange}
+                required
+                rows={4}
+                className="crm-textarea"
+                placeholder="Describe the interaction details, topics discussed, outcomes..."
+                style={{ marginTop: '6px' }}
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  const name = formData.hcp_name || 'the doctor';
+                  const org = formData.hcp_organization || 'their hospital';
+                  const type = formData.interaction_type;
+                  const typeNames = { call: 'call', meeting: 'meeting', email: 'email exchange', visit: 'visit', conference: 'conference' };
+                  const typeName = typeNames[type] || 'interaction';
+                  const generated = `Had a ${typeName} with ${name} from ${org}. Discussed current treatment protocols and patient outcomes. ${formData.follow_up_required === 'yes' ? 'Follow-up scheduled to review progress.' : 'Will continue to monitor and follow up as needed.'}`;
+                  setFormData({ ...formData, notes: generated });
+                }}
+                title="Generate notes with AI"
+                className="crm-ai-btn"
+              >
+                ✨
+              </button>
+            </div>
+          </div>
+
+          <div className="crm-form-row">
+            <div className="crm-field">
+              <label className="crm-label">Follow-up Required</label>
+              <select
+                name="follow_up_required"
+                value={formData.follow_up_required}
+                onChange={handleChange}
+                className="crm-select"
+              >
+                <option value="no">No</option>
+                <option value="yes">Yes</option>
+              </select>
+            </div>
+            {formData.follow_up_required === 'yes' && (
+              <div className="crm-field">
+                <label className="crm-label">Follow-up Date</label>
+                <input
+                  type="datetime-local"
+                  name="follow_up_date"
+                  value={formData.follow_up_date}
+                  onChange={handleChange}
+                  className="crm-input"
+                />
               </div>
             )}
           </div>
-        </div>
 
-        <div style={styles.field}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-            <label style={styles.label}>Notes *</label>
-            <button
-              type="button"
-              onClick={() => {
-                const name = formData.hcp_name || 'the doctor';
-                const org = formData.hcp_organization || 'their hospital';
-                const type = formData.interaction_type;
-                const typeNames = { call: 'call', meeting: 'meeting', email: 'email exchange', visit: 'visit', conference: 'conference' };
-                const typeName = typeNames[type] || 'interaction';
-                const generated = `Had a ${typeName} with ${name} from ${org}. Discussed current treatment protocols and patient outcomes. ${formData.follow_up_required === 'yes' ? 'Follow-up scheduled to review progress.' : 'Will continue to monitor and follow up as needed.'}`;
-                setFormData({ ...formData, notes: generated });
-              }}
-              title="Generate notes with AI"
-              style={{
-                width: '28px',
-                height: '28px',
-                background: 'transparent',
-                color: '#0ea5e9',
-                border: '1px solid #0ea5e9',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '14px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: 0
-              }}
-              onMouseOver={(e) => { e.target.style.backgroundColor = '#f0f9ff'; }}
-              onMouseOut={(e) => { e.target.style.backgroundColor = 'transparent'; }}
-            >
-              ✨
+          <div className="crm-btn-row">
+            <button type="button" onClick={autoFill} className="crm-btn crm-btn-success">
+              ⚡ Auto Fill
+            </button>
+            <button type="submit" disabled={status === 'loading'} className="crm-btn crm-btn-primary">
+              {status === 'loading' ? '⏳ Logging...' : '💾 Log Interaction'}
             </button>
           </div>
-          <textarea
-            name="notes"
-            value={formData.notes}
-            onChange={handleChange}
-            required
-            rows={3}
-            style={{ ...styles.input, resize: 'vertical', lineHeight: '1.5', width: '100%', boxSizing: 'border-box' }}
-            placeholder="Describe the interaction details, topics discussed, outcomes... (or click ✨)"
-            onFocus={(e) => { e.target.style.borderColor = '#1a73e8'; e.target.style.boxShadow = '0 0 0 3px rgba(26,115,232,0.1)'; }}
-            onBlur={(e) => { e.target.style.borderColor = '#d1d5db'; e.target.style.boxShadow = 'none'; }}
-          />
-        </div>
+        </form>
+      </div>
 
-        <div style={styles.row}>
-          <div>
-            <label style={styles.label}>Follow-up Required</label>
-            <select
-              name="follow_up_required"
-              value={formData.follow_up_required}
-              onChange={handleChange}
-              style={{ ...styles.input, backgroundColor: 'white', cursor: 'pointer' }}
-            >
-              <option value="no">No</option>
-              <option value="yes">Yes</option>
-            </select>
-          </div>
-          {formData.follow_up_required === 'yes' && (
-            <div>
-              <label style={styles.label}>Follow-up Date</label>
+      {/* Date Picker Modal */}
+      {showDatePicker && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex',
+          alignItems: 'center', justifyContent: 'center', zIndex: 1000
+        }}>
+          <div style={{
+            backgroundColor: 'white', borderRadius: '12px', padding: '24px',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.3)', minWidth: '320px'
+          }}>
+            <h3 style={{ margin: '0 0 20px', fontSize: '1.1rem', fontWeight: 600, color: '#111827', fontFamily: 'Inter, sans-serif' }}>
+              📅 Select Date & Time
+            </h3>
+            
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem', fontWeight: 500, color: '#374151', fontFamily: 'Inter, sans-serif' }}>Date</label>
               <input
-                type="datetime-local"
-                name="follow_up_date"
-                value={formData.follow_up_date}
-                onChange={handleChange}
-                style={{ ...styles.input, cursor: 'pointer' }}
+                type="date"
+                value={tempDate}
+                onChange={(e) => setTempDate(e.target.value)}
+                style={{
+                  width: '100%', padding: '10px', border: '1px solid #d1d5db',
+                  borderRadius: '8px', fontSize: '0.9rem', fontFamily: 'Inter, sans-serif', boxSizing: 'border-box'
+                }}
               />
             </div>
-          )}
+            
+            <div style={{ marginBottom: '24px' }}>
+              <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem', fontWeight: 500, color: '#374151', fontFamily: 'Inter, sans-serif' }}>Time</label>
+              <input
+                type="time"
+                value={tempTime}
+                onChange={(e) => setTempTime(e.target.value)}
+                style={{
+                  width: '100%', padding: '10px', border: '1px solid #d1d5db',
+                  borderRadius: '8px', fontSize: '0.9rem', fontFamily: 'Inter, sans-serif', boxSizing: 'border-box'
+                }}
+              />
+            </div>
+            
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button
+                type="button"
+                onClick={handleDateCancel}
+                style={{
+                  flex: 1, padding: '10px', backgroundColor: '#f3f4f6', color: '#374151',
+                  border: '1px solid #d1d5db', borderRadius: '8px', cursor: 'pointer',
+                  fontWeight: 500, fontFamily: 'Inter, sans-serif', fontSize: '0.9rem'
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDateSet}
+                style={{
+                  flex: 1, padding: '10px', background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+                  color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer',
+                  fontWeight: 500, fontFamily: 'Inter, sans-serif', fontSize: '0.9rem'
+                }}
+              >
+                ✓ Set
+              </button>
+            </div>
+          </div>
         </div>
-
-        <div style={{ display: 'flex', gap: '10px', marginTop: '0.5rem' }}>
-          <button
-            type="button"
-            onClick={autoFill}
-            style={{
-              flex: 1,
-              padding: '12px',
-              background: 'linear-gradient(135deg, #10b981, #059669)',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              fontSize: '1rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              fontFamily: 'Inter, sans-serif',
-              boxShadow: '0 2px 8px rgba(16,185,129,0.3)',
-              transition: 'all 0.2s'
-            }}
-            onMouseOver={(e) => { e.target.style.boxShadow = '0 4px 16px rgba(16,185,129,0.4)'; }}
-            onMouseOut={(e) => { e.target.style.boxShadow = '0 2px 8px rgba(16,185,129,0.3)'; }}
-          >
-            ⚡ Auto Fill
-          </button>
-          <button
-            type="submit"
-            disabled={status === 'loading'}
-            style={{
-              flex: 2,
-              padding: '12px',
-              background: status === 'loading' ? '#93c5fd' : 'linear-gradient(135deg, #1a73e8, #1557b0)',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              fontSize: '1rem',
-              fontWeight: 600,
-              cursor: status === 'loading' ? 'not-allowed' : 'pointer',
-              fontFamily: 'Inter, sans-serif',
-              boxShadow: '0 2px 8px rgba(26,115,232,0.3)',
-              transition: 'all 0.2s'
-            }}
-            onMouseOver={(e) => { if (status !== 'loading') e.target.style.boxShadow = '0 4px 16px rgba(26,115,232,0.4)'; }}
-            onMouseOut={(e) => { e.target.style.boxShadow = '0 2px 8px rgba(26,115,232,0.3)'; }}
-          >
-            {status === 'loading' ? '⏳ Logging...' : '💾 Log Interaction'}
-          </button>
-        </div>
-      </form>
+      )}
     </div>
   );
 };
