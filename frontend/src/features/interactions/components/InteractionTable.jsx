@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import Badge from './Badge';
 
 const InteractionTable = ({ 
@@ -13,7 +13,6 @@ const InteractionTable = ({
   sortConfig,
   onSort
 }) => {
-  const [selectedRows, setSelectedRows] = useState(new Set());
 
   const getInitials = (name) => {
     if (!name) return '?';
@@ -32,26 +31,6 @@ const InteractionTable = ({
   const truncateText = (text, maxLength = 100) => {
     if (!text) return 'No summary available';
     return text.length > maxLength ? text.slice(0, maxLength) + '...' : text;
-  };
-
-  const handleSelectAll = (e) => {
-    if (e.target.checked) {
-      setSelectedRows(new Set(interactions.map(i => i.id)));
-    } else {
-      setSelectedRows(new Set());
-    }
-  };
-
-  const handleSelectRow = (id) => {
-    setSelectedRows(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(id)) {
-        newSet.delete(id);
-      } else {
-        newSet.add(id);
-      }
-      return newSet;
-    });
   };
 
   const handleSort = (key) => {
@@ -102,7 +81,6 @@ const InteractionTable = ({
           <h3 className="table-title">Interactions</h3>
           <span className="table-count">
             {interactions.length} record{interactions.length !== 1 ? 's' : ''}
-            {selectedRows.size > 0 && ` • ${selectedRows.size} selected`}
           </span>
         </div>
         <div className="table-header-right">
@@ -129,14 +107,6 @@ const InteractionTable = ({
         <table className="data-table" role="grid">
           <thead>
             <tr>
-              <th style={{ width: '40px' }}>
-                <input
-                  type="checkbox"
-                  checked={selectedRows.size === currentInteractions.length && currentInteractions.length > 0}
-                  onChange={handleSelectAll}
-                  aria-label="Select all rows"
-                />
-              </th>
               <th onClick={() => handleSort('hcp_name')}>
                 Doctor {getSortIcon('hcp_name')}
               </th>
@@ -165,24 +135,13 @@ const InteractionTable = ({
           <tbody>
             {currentInteractions.length === 0 ? (
               <tr>
-                <td colSpan="10" style={{ textAlign: 'center', padding: '40px' }}>
+                <td colSpan="9" style={{ textAlign: 'center', padding: '40px' }}>
                   No interactions found
                 </td>
               </tr>
             ) : (
               currentInteractions.map((interaction) => (
-                <tr 
-                  key={interaction.id}
-                  className={selectedRows.has(interaction.id) ? 'selected' : ''}
-                >
-                  <td>
-                    <input
-                      type="checkbox"
-                      checked={selectedRows.has(interaction.id)}
-                      onChange={() => handleSelectRow(interaction.id)}
-                      aria-label={`Select ${interaction.hcp_name}`}
-                    />
-                  </td>
+                <tr key={interaction.id}>
                   <td>
                     <div className="cell-doctor">
                       <div className="doctor-avatar">
