@@ -51,6 +51,22 @@ export const deleteInteraction = createAsyncThunk(
   }
 );
 
+export const updateInteraction = createAsyncThunk(
+  'interactions/update',
+  async ({ id, data }, { rejectWithValue }) => {
+    try {
+      const response = await axios.put(`${API_URL}/interactions/${id}`, data, { timeout: 10000 });
+      return response.data;
+    } catch (error) {
+      let errorMsg = 'Failed to update interaction';
+      if (error.response?.data?.detail) {
+        errorMsg = error.response.data.detail;
+      }
+      return rejectWithValue(errorMsg);
+    }
+  }
+);
+
 const interactionSlice = createSlice({
   name: 'interactions',
   initialState: {
@@ -88,6 +104,15 @@ const interactionSlice = createSlice({
       })
       .addCase(deleteInteraction.rejected, (state, action) => {
         state.error = action.payload || 'Failed to delete interaction';
+      })
+      .addCase(updateInteraction.fulfilled, (state, action) => {
+        const index = state.items.findIndex(i => i.id === action.payload.id);
+        if (index !== -1) {
+          state.items[index] = action.payload;
+        }
+      })
+      .addCase(updateInteraction.rejected, (state, action) => {
+        state.error = action.payload || 'Failed to update interaction';
       });
   },
 });

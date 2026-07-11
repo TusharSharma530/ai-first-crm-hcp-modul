@@ -1,392 +1,383 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchInteractions, deleteInteraction } from './interactionSlice';
-import '../../styles/interactions.css';
+import { useNavigate } from 'react-router-dom';
+import { fetchInteractions, deleteInteraction, updateInteraction } from './interactionSlice';
+import StatsCard from './components/StatsCard';
+import SearchFilter from './components/SearchFilter';
+import InteractionTable from './components/InteractionTable';
+import SideDrawer from './components/SideDrawer';
+import EditDrawer from './components/EditDrawer';
+import AIInsightsDrawer from './components/AIInsightsDrawer';
+import EmptyState from './components/EmptyState';
+import SkeletonLoader from './components/SkeletonLoader';
+import '../../styles/interactions-premium.css';
 
 const InteractionsPage = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { items: interactions, status } = useSelector(state => state.interactions);
-  const [filter, setFilter] = useState('all');
-  const [sentimentFilter, setSentimentFilter] = useState('all');
+  
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState('newest');
-  const [viewMode, setViewMode] = useState('list');
+  const [filters, setFilters] = useState({
+    type: 'all',
+    sentiment: 'all',
+    followUp: 'all',
+    specialty: 'all',
+    priority: 'all',
+    aiSummary: 'all',
+    doctorName: '',
+    dateFrom: ''
+  });
+  const [appliedFilters, setAppliedFilters] = useState({});
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+  const [sortConfig, setSortConfig] = useState({ key: 'interaction_date', direction: 'desc' });
+  const [selectedInteraction, setSelectedInteraction] = useState(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [editDrawerOpen, setEditDrawerOpen] = useState(false);
+  const [aiDrawerOpen, setAiDrawerOpen] = useState(false);
+  const [editingInteraction, setEditingInteraction] = useState(null);
 
   useEffect(() => {
     dispatch(fetchInteractions());
   }, [dispatch]);
 
-  const handleDelete = (id) => {
-    if (window.confirm('Are you sure you want to delete this interaction?')) {
-      dispatch(deleteInteraction(id));
-    }
-  };
-
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit'
+  // Calculate KPIs
+  const kpis = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const todayInteractions = interactions.filter(i => {
+      const date = new Date(i.interaction_date);
+      return date >= today;
     });
-  };
 
-  const typeConfig = {
-    call: { icon: '📞', label: 'Call' },
-    meeting: { icon: '🤝', label: 'Meeting' },
-    email: { icon: '📧', label: 'Email' },
-    visit: { icon: '🏥', label: 'Visit' },
-    conference: { icon: '🎤', label: 'Conference' }
-  };
+    const pendingFollowUps = interactions.filter(i => 
+      i.follow_up_required === 'yes'
+    );
 
-  const sentimentConfig = {
-    positive: { icon: '😊', label: 'Positive', activeClass: 'active-green' },
-    neutral: { icon: '😐', label: 'Neutral', activeClass: 'active-yellow' },
-    negative: { icon: '😞', label: 'Negative', activeClass: 'active-red' }
-  };
+    const completedMeetings = interactions.filter(i => 
+      i.interaction_type === 'meeting'
+    );
 
-  const typeCounts = useMemo(() => {
-    return interactions.reduce((acc, i) => {
-      acc[i.interaction_type] = (acc[i.interaction_type] || 0) + 1;
-      return acc;
-    }, {});
+    const aiSummaries = interactions.filter(i => 
+      i.summary && i.summary.length > 0
+    );
+
+    const highPriority = interactions.filter(i => 
+      i.sentiment?.toLowerCase() === 'positive'
+    );
+
+    return {
+      total: interactions.length,
+      todayCalls: todayInteractions.filter(i => i.interaction_type === 'call').length,
+      pendingFollowUps: pendingFollowUps.length,
+      completedMeetings: completedMeetings.length,
+      aiGenerated: aiSummaries.length,
+      highPriority: highPriority.length
+    };
   }, [interactions]);
 
-  const sentimentCounts = useMemo(() => {
-    return interactions.reduce((acc, i) => {
-      const s = i.sentiment?.toLowerCase() || 'neutral';
-      acc[s] = (acc[s] || 0) + 1;
-      return acc;
-    }, {});
-  }, [interactions]);
-
+  // Filter and sort interactions
   const filteredInteractions = useMemo(() => {
-    let result = interactions;
+    let result = [...interactions];
 
-    if (filter !== 'all') {
-      result = result.filter(i => i.interaction_type === filter);
-    }
-
-    if (sentimentFilter !== 'all') {
-      result = result.filter(i => (i.sentiment?.toLowerCase() || 'neutral') === sentimentFilter);
-    }
-
+    // Search query
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       result = result.filter(i =>
         i.hcp_name?.toLowerCase().includes(q) ||
-        i.notes?.toLowerCase().includes(q) ||
-        i.key_topics?.toLowerCase().includes(q) ||
-        i.hcp_specialty?.toLowerCase().includes(q) ||
         i.hcp_organization?.toLowerCase().includes(q) ||
+        i.hcp_specialty?.toLowerCase().includes(q) ||
+        i.notes?.toLowerCase().includes(q) ||
         i.summary?.toLowerCase().includes(q)
       );
     }
 
-    result = [...result].sort((a, b) => {
-      switch (sortBy) {
-        case 'newest':
-          return new Date(b.interaction_date) - new Date(a.interaction_date);
-        case 'oldest':
-          return new Date(a.interaction_date) - new Date(b.interaction_date);
-        case 'name-asc':
-          return (a.hcp_name || '').localeCompare(b.hcp_name || '');
-        case 'name-desc':
-          return (b.hcp_name || '').localeCompare(a.hcp_name || '');
-        default:
-          return 0;
+    // Applied filters
+    if (appliedFilters.type && appliedFilters.type !== 'all') {
+      result = result.filter(i => i.interaction_type === appliedFilters.type);
+    }
+    if (appliedFilters.sentiment && appliedFilters.sentiment !== 'all') {
+      result = result.filter(i => i.sentiment?.toLowerCase() === appliedFilters.sentiment);
+    }
+    if (appliedFilters.followUp && appliedFilters.followUp !== 'all') {
+      result = result.filter(i => i.follow_up_required === appliedFilters.followUp);
+    }
+    if (appliedFilters.specialty && appliedFilters.specialty !== 'all') {
+      result = result.filter(i => 
+        i.hcp_specialty?.toLowerCase() === appliedFilters.specialty.toLowerCase()
+      );
+    }
+    if (appliedFilters.doctorName) {
+      const name = appliedFilters.doctorName.toLowerCase();
+      result = result.filter(i => 
+        i.hcp_name?.toLowerCase().includes(name)
+      );
+    }
+    if (appliedFilters.dateFrom) {
+      const fromDate = new Date(appliedFilters.dateFrom);
+      result = result.filter(i => 
+        new Date(i.interaction_date) >= fromDate
+      );
+    }
+
+    // Sorting
+    result.sort((a, b) => {
+      let aValue = a[sortConfig.key];
+      let bValue = b[sortConfig.key];
+
+      if (sortConfig.key === 'interaction_date') {
+        aValue = new Date(aValue || 0);
+        bValue = new Date(bValue || 0);
+      } else {
+        aValue = (aValue || '').toString().toLowerCase();
+        bValue = (bValue || '').toString().toLowerCase();
       }
+
+      if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+      return 0;
     });
 
     return result;
-  }, [interactions, filter, sentimentFilter, searchQuery, sortBy]);
+  }, [interactions, searchQuery, appliedFilters, sortConfig]);
 
-  const exportCSV = () => {
-    const headers = ['HCP Name', 'Specialty', 'Organization', 'Type', 'Sentiment', 'Notes', 'Summary', 'Topics', 'Date', 'Follow-up'];
-    const rows = filteredInteractions.map(i => [
-      i.hcp_name, i.hcp_specialty, i.hcp_organization, i.interaction_type,
-      i.sentiment, `"${(i.notes || '').replace(/"/g, '""')}"`,
-      `"${(i.summary || '').replace(/"/g, '""')}"`, i.key_topics,
-      formatDate(i.interaction_date), i.follow_up_required ? formatDate(i.follow_up_date) : ''
-    ]);
-    const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `interactions_${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
+  const handleSearchChange = useCallback((value) => {
+    setSearchQuery(value);
+    setCurrentPage(1);
+  }, []);
 
-  const getTypePillClass = (type) => {
-    const colorMap = {
-      call: 'active-green',
-      meeting: 'active-blue',
-      email: 'active-purple',
-      visit: 'active-yellow',
-      conference: 'active-red'
-    };
-    return colorMap[type] || 'active-blue';
-  };
+  const handleFilterChange = useCallback((newFilters) => {
+    setFilters(newFilters);
+  }, []);
+
+  const handleApplyFilters = useCallback(() => {
+    setAppliedFilters({ ...filters });
+    setCurrentPage(1);
+  }, [filters]);
+
+  const handleResetFilters = useCallback(() => {
+    setFilters({
+      type: 'all',
+      sentiment: 'all',
+      followUp: 'all',
+      specialty: 'all',
+      priority: 'all',
+      aiSummary: 'all',
+      doctorName: '',
+      dateFrom: ''
+    });
+    setAppliedFilters({});
+    setSearchQuery('');
+    setCurrentPage(1);
+  }, []);
+
+  const handleSort = useCallback((key) => {
+    setSortConfig(prev => ({
+      key,
+      direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
+    }));
+  }, []);
+
+  const handleView = useCallback((interaction) => {
+    setSelectedInteraction(interaction);
+    setDrawerOpen(true);
+  }, []);
+
+  const handleEdit = useCallback((interaction) => {
+    setEditingInteraction(interaction);
+    setEditDrawerOpen(true);
+  }, []);
+
+  const handleDelete = useCallback((id) => {
+    dispatch(deleteInteraction(id));
+  }, [dispatch]);
+
+  const handleAIInsights = useCallback((interaction) => {
+    setSelectedInteraction(interaction);
+    setAiDrawerOpen(true);
+  }, []);
+
+  const handleCreateNew = useCallback(() => {
+    navigate('/');
+  }, [navigate]);
+
+  const handleCloseDrawer = useCallback(() => {
+    setDrawerOpen(false);
+    setSelectedInteraction(null);
+  }, []);
+
+  const handleSaveEdit = useCallback(async (id, data) => {
+    await dispatch(updateInteraction({ id, data }));
+    setEditDrawerOpen(false);
+    setEditingInteraction(null);
+  }, [dispatch]);
+
+  const handleCloseEditDrawer = useCallback(() => {
+    setEditDrawerOpen(false);
+    setEditingInteraction(null);
+  }, []);
+
+  const handleCloseAiDrawer = useCallback(() => {
+    setAiDrawerOpen(false);
+    setSelectedInteraction(null);
+  }, []);
 
   if (status === 'loading') {
     return (
-      <div className="loading-state">
-        <div className="loading-icon">⏳</div>
-        <p className="loading-text">Loading interactions...</p>
+      <div className="interactions-premium">
+        <SkeletonLoader type="full" />
       </div>
     );
   }
 
   return (
-    <div className="interactions-page">
-      {/* Header */}
-      <div className="interactions-header">
-        <div className="header-brand">
-          <div className="header-icon">📋</div>
-          <div>
-            <h2 className="header-title">All Interactions</h2>
-            <p className="header-count">{filteredInteractions.length} of {interactions.length} records</p>
-          </div>
-        </div>
-        <button className="export-btn" onClick={exportCSV}>
-          📥 Export CSV
-        </button>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="stats-grid">
-        <div className="stat-card stat-total">
-          <div className="stat-label">📊 Total</div>
-          <div className="stat-value">{interactions.length}</div>
-        </div>
-
-        {Object.entries(typeConfig).map(([type, config]) => (
-          <div
-            key={type}
-            className={`stat-card type-${type} ${filter === type ? 'active' : ''}`}
-            onClick={() => setFilter(filter === type ? 'all' : type)}
-          >
-            <div className="stat-label">
-              <span className="stat-icon">{config.icon}</span>
-              {config.label}
+    <div className="interactions-premium">
+      {/* Premium Page Header */}
+      <header className="page-header">
+        <div className="page-header-content">
+          <div className="page-header-left">
+            <h1 className="page-header-title">All HCP Interactions</h1>
+            <p className="page-header-subtitle">
+              Manage and track all healthcare professional interactions
+            </p>
+            <div className="page-header-meta">
+              <div className="page-header-meta-item">
+                <div className="page-header-meta-icon">📊</div>
+                <span>{interactions.length} Total Records</span>
+              </div>
+              <div className="page-header-meta-item">
+                <div className="page-header-meta-icon">🕐</div>
+                <span>Updated {new Date().toLocaleTimeString()}</span>
+              </div>
             </div>
-            <div className="stat-value">{typeCounts[type] || 0}</div>
           </div>
-        ))}
-      </div>
-
-      {/* Search & Controls */}
-      <div className="controls-row">
-        <div className="search-wrapper">
-          <span className="search-icon">🔍</span>
-          <input
-            type="text"
-            placeholder="Search by name, notes, topics, specialty..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="search-input"
-          />
-        </div>
-
-        <select
-          value={sortBy}
-          onChange={(e) => setSortBy(e.target.value)}
-          className="sort-select"
-        >
-          <option value="newest">📅 Newest First</option>
-          <option value="oldest">📅 Oldest First</option>
-          <option value="name-asc">🔤 Name A-Z</option>
-          <option value="name-desc">🔤 Name Z-A</option>
-        </select>
-
-        <div className="view-toggle">
-          <button
-            className={`view-btn ${viewMode === 'list' ? 'active' : ''}`}
-            onClick={() => setViewMode('list')}
-          >☰</button>
-          <button
-            className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`}
-            onClick={() => setViewMode('grid')}
-          >⊞</button>
-        </div>
-      </div>
-
-      {/* Sentiment Filter */}
-      <div className="filter-row">
-        <button
-          className={`filter-pill ${sentimentFilter === 'all' ? 'active active-purple' : ''}`}
-          onClick={() => setSentimentFilter('all')}
-        >
-          <span className="filter-icon">🔄</span>
-          <span>All</span>
-          <span className="filter-count">{interactions.length}</span>
-        </button>
-        {Object.entries(sentimentConfig).map(([sent, config]) => (
-          <button
-            key={sent}
-            className={`filter-pill ${sentimentFilter === sent ? `active ${config.activeClass}` : ''}`}
-            onClick={() => setSentimentFilter(sent)}
-          >
-            <span className="filter-icon">{config.icon}</span>
-            <span>{config.label}</span>
-            <span className="filter-count">{sentimentCounts[sent] || 0}</span>
-          </button>
-        ))}
-      </div>
-
-      {/* Type Filter */}
-      <div className="filter-row">
-        <button
-          className={`filter-pill ${filter === 'all' ? 'active active-blue' : ''}`}
-          onClick={() => setFilter('all')}
-        >
-          <span className="filter-icon">📋</span>
-          <span>All</span>
-          <span className="filter-count">{interactions.length}</span>
-        </button>
-        {['call', 'meeting', 'email', 'visit', 'conference'].map(type => (
-          <button
-            key={type}
-            className={`filter-pill ${filter === type ? `active ${getTypePillClass(type)}` : ''}`}
-            onClick={() => setFilter(type)}
-          >
-            <span className="filter-icon">{typeConfig[type].icon}</span>
-            <span>{typeConfig[type].label}</span>
-            <span className="filter-count">{typeCounts[type] || 0}</span>
-          </button>
-        ))}
-      </div>
-
-      {/* Results */}
-      {filteredInteractions.length === 0 ? (
-        <div className="empty-state">
-          <div className="empty-icon">{searchQuery ? '🔍' : '📭'}</div>
-          <p className="empty-text">
-            {searchQuery ? 'No results match your search' : 'No interactions found'}
-          </p>
-          {searchQuery && (
-            <button className="empty-btn" onClick={() => setSearchQuery('')}>
-              Clear Search
+          <div className="page-header-actions">
+            <button className="btn btn-secondary" onClick={() => {
+              // Export functionality
+              const headers = ['HCP Name', 'Email', 'Specialty', 'Organization', 'Type', 'Sentiment', 'Notes', 'Summary', 'Date'];
+              const rows = filteredInteractions.map(i => [
+                i.hcp_name, i.hcp_email, i.hcp_specialty, i.hcp_organization,
+                i.interaction_type, i.sentiment, `"${(i.notes || '').replace(/"/g, '""')}"`,
+                `"${(i.summary || '').replace(/"/g, '""')}"`,
+                new Date(i.interaction_date).toLocaleDateString()
+              ]);
+              const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
+              const blob = new Blob([csv], { type: 'text/csv' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `interactions_${new Date().toISOString().slice(0, 10)}.csv`;
+              a.click();
+              URL.revokeObjectURL(url);
+            }}>
+              <span aria-hidden="true">📥</span>
+              <span>Export</span>
             </button>
-          )}
+            <button className="btn btn-primary" onClick={handleCreateNew}>
+              <span aria-hidden="true">+</span>
+              <span>New Interaction</span>
+            </button>
+          </div>
         </div>
-      ) : viewMode === 'grid' ? (
-        <div className="grid-view">
-          {filteredInteractions.map((interaction) => (
-            <div
-              key={interaction.id}
-              className="interaction-card-grid"
-              data-type={interaction.interaction_type}
-            >
-              <div className="card-header">
-                <div className="card-user">
-                  <div className="avatar">{typeConfig[interaction.interaction_type]?.icon || '📞'}</div>
-                  <div className="card-user-info">
-                    <h3>{interaction.hcp_name}</h3>
-                    <p className="card-user-meta">
-                      {interaction.hcp_specialty || 'N/A'}
-                      {interaction.hcp_organization && ` • ${interaction.hcp_organization}`}
-                    </p>
-                  </div>
-                </div>
-                <button className="delete-btn" onClick={() => handleDelete(interaction.id)} data-tooltip="Delete">🗑️</button>
-              </div>
-              <div className="card-badges">
-                <span className="badge badge-type" data-type={interaction.interaction_type}>
-                  {typeConfig[interaction.interaction_type]?.icon} {interaction.interaction_type}
-                </span>
-                {interaction.sentiment && (
-                  <span className="badge badge-sentiment" data-sentiment={interaction.sentiment.toLowerCase()}>
-                    {sentimentConfig[interaction.sentiment.toLowerCase()]?.icon} {interaction.sentiment}
-                  </span>
-                )}
-              </div>
-              <p className="card-notes-grid">
-                {interaction.notes?.length > 140 ? interaction.notes.slice(0, 140) + '...' : interaction.notes}
-              </p>
-              {interaction.summary && (
-                <div className="card-summary">
-                  <span className="summary-label">📋 Summary: </span>
-                  <span className="summary-text">
-                    {interaction.summary.length > 120 ? interaction.summary.slice(0, 120) + '...' : interaction.summary}
-                  </span>
-                </div>
-              )}
-              {interaction.key_topics && (
-                <div className="card-topics">
-                  <span className="topics-label">🏷️ Topics: </span>
-                  <span className="topics-text">{interaction.key_topics}</span>
-                </div>
-              )}
-              <div className="card-footer">
-                <span className="card-date">📅 {formatDate(interaction.interaction_date)}</span>
-                {interaction.follow_up_required && (
-                  <span className="badge badge-followup">⏰ Follow-up</span>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
+      </header>
+
+      {/* KPI Cards */}
+      <div className="kpi-grid">
+        <StatsCard
+          icon="📊"
+          value={kpis.total}
+          label="Total Interactions"
+          color="blue"
+        />
+        <StatsCard
+          icon="📞"
+          value={kpis.todayCalls}
+          label="Today's Calls"
+          color="green"
+        />
+        <StatsCard
+          icon="⏰"
+          value={kpis.pendingFollowUps}
+          label="Pending Follow-ups"
+          color="yellow"
+        />
+        <StatsCard
+          icon="🤝"
+          value={kpis.completedMeetings}
+          label="Completed Meetings"
+          color="purple"
+        />
+        <StatsCard
+          icon="🤖"
+          value={kpis.aiGenerated}
+          label="AI Generated Summaries"
+          color="teal"
+        />
+        <StatsCard
+          icon="⭐"
+          value={kpis.highPriority}
+          label="High Priority HCPs"
+          color="green"
+        />
+      </div>
+
+      {/* Search & Filters */}
+      <SearchFilter
+        searchQuery={searchQuery}
+        onSearchChange={handleSearchChange}
+        filters={filters}
+        onFilterChange={handleFilterChange}
+        onResetFilters={handleResetFilters}
+        onApplyFilters={handleApplyFilters}
+      />
+
+      {/* Data Table or Empty State */}
+      {filteredInteractions.length === 0 ? (
+        <EmptyState
+          icon="📋"
+          title="No interactions found"
+          text="Start by creating your first interaction or adjust your filters to see more results."
+          buttonText="Create First Interaction"
+          onButtonClick={handleCreateNew}
+        />
       ) : (
-        <div className="list-view">
-          {filteredInteractions.map((interaction) => (
-            <div
-              key={interaction.id}
-              className="interaction-card-list"
-              data-type={interaction.interaction_type}
-            >
-              <div className="card-header-list">
-                <div className="card-user">
-                  <div className="avatar">{typeConfig[interaction.interaction_type]?.icon || '📞'}</div>
-                  <div className="card-user-info">
-                    <div className="card-badges-inline">
-                      <h3>{interaction.hcp_name}</h3>
-                      <span className="badge badge-type" data-type={interaction.interaction_type}>
-                        {typeConfig[interaction.interaction_type]?.icon} {interaction.interaction_type}
-                      </span>
-                      {interaction.sentiment && (
-                        <span className="badge badge-sentiment" data-sentiment={interaction.sentiment.toLowerCase()}>
-                          {sentimentConfig[interaction.sentiment.toLowerCase()]?.icon} {interaction.sentiment}
-                        </span>
-                      )}
-                      {interaction.follow_up_required && (
-                        <span className="badge badge-followup">⏰ Follow-up</span>
-                      )}
-                    </div>
-                    <p className="card-user-meta-list">
-                      <span>{interaction.hcp_specialty || 'N/A'}</span>
-                      {interaction.hcp_organization && (
-                        <>
-                          <span className="card-meta-divider">•</span>
-                          <span>{interaction.hcp_organization}</span>
-                        </>
-                      )}
-                      <span className="card-meta-divider">|</span>
-                      <span>📅 {formatDate(interaction.interaction_date)}</span>
-                    </p>
-                  </div>
-                </div>
-                <button className="delete-btn" onClick={() => handleDelete(interaction.id)} data-tooltip="Delete">🗑️</button>
-              </div>
-
-              <p className="card-notes-list">{interaction.notes}</p>
-
-              {interaction.summary && (
-                <div className="card-summary-list">
-                  <span className="summary-label">📋 Summary: </span>
-                  <span className="summary-text">{interaction.summary}</span>
-                </div>
-              )}
-
-              {interaction.key_topics && (
-                <div className="card-topics-list">
-                  <span className="topics-label">🏷️ Topics: </span>
-                  <span className="topics-text">{interaction.key_topics}</span>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
+        <InteractionTable
+          interactions={filteredInteractions}
+          onView={handleView}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onAIInsights={handleAIInsights}
+          currentPage={currentPage}
+          itemsPerPage={itemsPerPage}
+          onPageChange={setCurrentPage}
+          sortConfig={sortConfig}
+          onSort={handleSort}
+        />
       )}
+
+      {/* Side Drawer */}
+      <SideDrawer
+        interaction={selectedInteraction}
+        isOpen={drawerOpen}
+        onClose={handleCloseDrawer}
+      />
+
+      {/* Edit Drawer */}
+      <EditDrawer
+        interaction={editingInteraction}
+        isOpen={editDrawerOpen}
+        onClose={handleCloseEditDrawer}
+        onSave={handleSaveEdit}
+      />
+
+      {/* AI Insights Drawer */}
+      <AIInsightsDrawer
+        interaction={selectedInteraction}
+        isOpen={aiDrawerOpen}
+        onClose={handleCloseAiDrawer}
+      />
     </div>
   );
 };
