@@ -5,6 +5,8 @@ import Layout from './components/Layout';
 import LogInteractionForm from './features/interactions/LogInteractionForm';
 import InteractionsPage from './features/interactions/InteractionsPage';
 import ChatInterface from './features/chat/ChatInterface';
+import HelpDeskForm from './features/helpdesk/HelpDeskForm';
+import ComplaintStatus from './features/helpdesk/ComplaintStatus';
 import DocsPage from './features/docs/DocsPage';
 import './styles/layout.css';
 
@@ -19,8 +21,14 @@ function App() {
                 <div className="home-form-wrapper">
                   <LogInteractionForm />
                 </div>
-                <div className="home-chat-wrapper">
-                  <ChatInterface />
+                <div className="home-sidebar">
+                  <div className="home-chat-wrapper">
+                    <ChatInterface />
+                  </div>
+                  <div className="helpdesk-row">
+                    <HelpDeskForm />
+                    <ComplaintStatus />
+                  </div>
                 </div>
               </div>
             } />

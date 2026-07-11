@@ -288,7 +288,7 @@ const InteractionsPage = () => {
                     </p>
                   </div>
                 </div>
-                <button className="delete-btn" onClick={() => handleDelete(interaction.id)}>🗑️</button>
+                <button className="delete-btn" onClick={() => handleDelete(interaction.id)} data-tooltip="Delete">🗑️</button>
               </div>
               <div className="card-badges">
                 <span className="badge badge-type" data-type={interaction.interaction_type}>
@@ -365,7 +365,7 @@ const InteractionsPage = () => {
                     </p>
                   </div>
                 </div>
-                <button className="delete-btn" onClick={() => handleDelete(interaction.id)}>🗑️</button>
+                <button className="delete-btn" onClick={() => handleDelete(interaction.id)} data-tooltip="Delete">🗑️</button>
               </div>
 
               <p className="card-notes-list">{interaction.notes}</p>

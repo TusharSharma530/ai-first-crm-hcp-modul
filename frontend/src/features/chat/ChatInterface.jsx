@@ -133,7 +133,7 @@ const ChatInterface = () => {
             <p style={styles.subtitle}>Powered by LangGraph + Groq</p>
           </div>
         </div>
-        <button onClick={() => dispatch(clearChat())} style={styles.clearBtn}>🗑️ Clear</button>
+        <button onClick={() => dispatch(clearChat())} style={styles.clearBtn} data-tooltip="Clear">🗑️ Clear</button>
       </div>
 
       <div style={styles.chatBox}>
@@ -203,7 +203,7 @@ const ChatInterface = () => {
             onFocus={(e) => { e.target.style.borderColor = '#10b981'; e.target.style.boxShadow = '0 0 0 3px rgba(16,185,129,0.1)'; }}
             onBlur={(e) => { e.target.style.borderColor = '#d1d5db'; e.target.style.boxShadow = 'none'; }}
           />
-          <button type="submit" disabled={status === 'loading' || !input.trim()} style={styles.sendBtn}>
+          <button type="submit" disabled={status === 'loading' || !input.trim()} style={styles.sendBtn} data-tooltip="Send">
             Send ➤
           </button>
         </form>
