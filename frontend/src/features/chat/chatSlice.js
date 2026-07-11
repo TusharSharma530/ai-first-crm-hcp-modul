@@ -1,13 +1,13 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 export const sendMessage = createAsyncThunk(
   'chat/sendMessage',
   async ({ message, sessionId }, { rejectWithValue }) => {
     try {
-      const response = await axios.post(`${API_URL}/chat/`, {
+      const response = await axios.post(`${API_URL}/api/chat/`, {
         message,
         session_id: sessionId,
       }, { timeout: 30000 });

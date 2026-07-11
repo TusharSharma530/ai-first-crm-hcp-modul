@@ -45,16 +45,16 @@ const InteractionsPage = () => {
 
   // Calculate KPIs
   const kpis = useMemo(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const now = new Date();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     
     const todayInteractions = interactions.filter(i => {
-      const date = new Date(i.interaction_date);
-      return date >= today;
+      const dateStr = i.interaction_date?.slice(0, 10);
+      return dateStr === todayStr;
     });
 
     const pendingFollowUps = interactions.filter(i => 
-      i.follow_up_required === 'yes'
+      i.follow_up_required === true || i.follow_up_required === 'yes' || i.follow_up_required === 'True'
     );
 
     const completedMeetings = interactions.filter(i => 
@@ -236,7 +236,7 @@ const InteractionsPage = () => {
     setSelectedInteraction(null);
   }, []);
 
-  if (status === 'loading') {
+  if (status === 'loading' || status === 'idle') {
     return (
       <div className="interactions-premium">
         <SkeletonLoader type="full" />

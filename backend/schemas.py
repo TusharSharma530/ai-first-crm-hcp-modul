@@ -1,7 +1,11 @@
-from pydantic import BaseModel, field_validator
+import re
+from pydantic import BaseModel, field_validator, EmailStr
 from typing import Optional
 from datetime import datetime
 from enum import Enum
+
+
+EMAIL_REGEX = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
 
 
 class InteractionTypeSchema(str, Enum):
@@ -82,3 +86,103 @@ class ChatResponse(BaseModel):
     session_id: str
     tool_used: Optional[str] = None
     extracted_data: Optional[dict] = None
+
+
+class UserCreate(BaseModel):
+    name: str
+    email: str
+    phone: Optional[str] = None
+    company: Optional[str] = None
+    role: Optional[str] = "user"
+    password: str
+    confirm_password: str
+
+    @field_validator("email")
+    @classmethod
+    def validate_email(cls, v):
+        if not EMAIL_REGEX.match(v):
+            raise ValueError("Invalid email format")
+        return v.lower()
+
+    @field_validator("password")
+    @classmethod
+    def validate_password(cls, v):
+        return v
+
+    @field_validator("confirm_password")
+    @classmethod
+    def validate_confirm_password(cls, v, info):
+        if info.data.get("password") and v != info.data["password"]:
+            raise ValueError("Passwords do not match")
+        return v
+
+
+class UserLogin(BaseModel):
+    email: str
+    password: str
+    remember_me: Optional[bool] = False
+
+    @field_validator("email")
+    @classmethod
+    def validate_email(cls, v):
+        return v.lower()
+
+
+class UserResponse(BaseModel):
+    id: int
+    name: str
+    email: str
+    phone: Optional[str] = None
+    company: Optional[str] = None
+    role: str
+    avatar: Optional[str] = None
+    bio: Optional[str] = None
+    language: str
+    timezone: str
+    last_login: Optional[datetime] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+    is_active: bool
+    is_verified: bool
+
+    class Config:
+        from_attributes = True
+
+
+class UserUpdate(BaseModel):
+    name: Optional[str] = None
+    phone: Optional[str] = None
+    company: Optional[str] = None
+    bio: Optional[str] = None
+    language: Optional[str] = None
+    timezone: Optional[str] = None
+    avatar: Optional[str] = None
+
+
+class ChangePassword(BaseModel):
+    current_password: str
+    new_password: str
+    confirm_password: str
+
+    @field_validator("new_password")
+    @classmethod
+    def validate_new_password(cls, v):
+        return v
+
+    @field_validator("confirm_password")
+    @classmethod
+    def validate_confirm_password(cls, v, info):
+        if info.data.get("new_password") and v != info.data["new_password"]:
+            raise ValueError("Passwords do not match")
+        return v
+
+
+class TokenResponse(BaseModel):
+    access_token: str
+    refresh_token: str
+    token_type: str = "bearer"
+    user: UserResponse
+
+
+class TokenRefresh(BaseModel):
+    refresh_token: str

@@ -1,1 +1,1 @@
-from . import interactions, chat
+from . import interactions, chat, auth

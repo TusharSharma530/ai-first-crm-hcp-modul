@@ -1,13 +1,13 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 export const fetchInteractions = createAsyncThunk(
   'interactions/fetchAll',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axios.get(`${API_URL}/interactions/`, { timeout: 10000 });
+      const response = await axios.get(`${API_URL}/api/interactions/`, { timeout: 10000 });
       return response.data;
     } catch (error) {
       let errorMsg = 'Failed to load interactions';
@@ -23,7 +23,7 @@ export const createInteraction = createAsyncThunk(
   'interactions/create',
   async (interactionData, { rejectWithValue }) => {
     try {
-      const response = await axios.post(`${API_URL}/interactions/`, interactionData, { timeout: 10000 });
+      const response = await axios.post(`${API_URL}/api/interactions/`, interactionData, { timeout: 10000 });
       return response.data;
     } catch (error) {
       let errorMsg = 'Failed to create interaction';
@@ -39,7 +39,7 @@ export const deleteInteraction = createAsyncThunk(
   'interactions/delete',
   async (id, { rejectWithValue }) => {
     try {
-      await axios.delete(`${API_URL}/interactions/${id}`, { timeout: 10000 });
+      await axios.delete(`${API_URL}/api/interactions/${id}`, { timeout: 10000 });
       return id;
     } catch (error) {
       let errorMsg = 'Failed to delete interaction';
@@ -55,7 +55,7 @@ export const updateInteraction = createAsyncThunk(
   'interactions/update',
   async ({ id, data }, { rejectWithValue }) => {
     try {
-      const response = await axios.put(`${API_URL}/interactions/${id}`, data, { timeout: 10000 });
+      const response = await axios.put(`${API_URL}/api/interactions/${id}`, data, { timeout: 10000 });
       return response.data;
     } catch (error) {
       let errorMsg = 'Failed to update interaction';
