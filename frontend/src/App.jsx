@@ -6,6 +6,7 @@ import LogInteractionForm from './features/interactions/LogInteractionForm';
 import InteractionsPage from './features/interactions/InteractionsPage';
 import ChatInterface from './features/chat/ChatInterface';
 import DocsPage from './features/docs/DocsPage';
+import './styles/layout.css';
 
 function App() {
   return (
@@ -14,28 +15,16 @@ function App() {
         <Layout>
           <Routes>
             <Route path="/" element={
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
-                gap: '1.5rem',
-                maxWidth: '1400px',
-                margin: '0 auto',
-                alignItems: 'start'
-              }}>
-                <div>
+              <div className="home-grid">
+                <div className="home-form-wrapper">
                   <LogInteractionForm />
                 </div>
-                <div style={{ position: 'sticky', top: '80px' }}>
+                <div className="home-chat-wrapper">
                   <ChatInterface />
                 </div>
               </div>
             } />
             <Route path="/interactions" element={<InteractionsPage />} />
-            <Route path="/chat" element={
-              <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-                <ChatInterface />
-              </div>
-            } />
             <Route path="/docs" element={<DocsPage />} />
           </Routes>
         </Layout>
